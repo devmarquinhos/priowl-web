@@ -14,7 +14,7 @@ export default function Home() {
   };
 
   return (
-    <div className={`min-h-screen relative overflow-hidden transition-colors duration-700 ease-in-out font-sans text-slate-900 ${
+    <div className={`min-h-screen relative overflow-hidden transition-colors duration-700 ease-in-out text-slate-900 ${
       isLogin ? 'bg-[#F2FCF3]' : 'bg-[#FFF8EE]'
     }`}>
       
