@@ -8,9 +8,44 @@ export default function Home() {
   const [showPassword, setShowPassword] = useState(false);
   const [showRepeatPassword, setShowRepeatPassword] = useState(false);
 
-  const handleSubmit = (e: { preventDefault: () => void; }) => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [errorMsg, setErrorMsg] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Submetendo formulário...");
+    setErrorMsg('');
+    setIsLoading(true);
+
+    try {
+      if (isLogin) {
+        // login
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          setErrorMsg(data.error || 'Falha na autenticação.');
+          return;
+        }
+
+        console.log("Successful Login");
+        // window.location.href = '/dashboard'; 
+        
+      } else {
+        console.log("Something went wrong");
+      }
+    } catch (err) {
+      console.error(err);
+      setErrorMsg('Connection error, try again later.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -96,6 +131,8 @@ export default function Home() {
                 <input
                   id="email"
                   type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter your e-mail"
                   className="w-full px-4 py-3 bg-white/90 rounded-xl border border-slate-200 focus:outline-none focus:ring-1 focus:ring-black focus:border-black transition-colors placeholder:text-slate-400"
                   required
@@ -112,6 +149,8 @@ export default function Home() {
                     id="password"
                     type={showPassword ? "text" : "password"}
                     placeholder="Enter your password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                     className="w-full pl-4 pr-12 py-3 bg-white/90 rounded-xl border border-slate-200 focus:outline-none focus:ring-1 focus:ring-black focus:border-black transition-colors placeholder:text-slate-400"
                     required
                   />
