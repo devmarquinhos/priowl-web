@@ -4,45 +4,69 @@ import { Eye, EyeOff } from 'lucide-react';
 import Image from 'next/image';
 
 export default function Home() {
+  // login / register page states
   const [isLogin, setIsLogin] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showRepeatPassword, setShowRepeatPassword] = useState(false);
 
+  // form data states
+  const [username, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [errorMsg, setErrorMsg] = useState('');
+  const [repeatPassword, setRepeatPassword] = useState('');
+
+  // feedback states
+  const [errorMessage, setErrorMessage] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setErrorMsg('');
+    setErrorMessage('');
+    setSuccessMessage('');
+
+    if (!isLogin && password !== repeatPassword) {
+      setErrorMessage('As senhas digitadas não coincidem.');
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      if (isLogin) {
-        // login
-        const res = await fetch('/api/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password }),
-        });
+      const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
+      const bodyPayload = isLogin 
+        ? { email, password } 
+        : { username, email, password };
 
-        const data = await res.json();
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(bodyPayload)
+      });
 
-        if (!res.ok) {
-          setErrorMsg(data.error || 'Falha na autenticação.');
-          return;
-        }
+      const data = await response.json();
 
-        console.log("Successful Login");
-        // window.location.href = '/dashboard'; 
-        
-      } else {
-        console.log("Something went wrong");
+      if (!response.ok) {
+        throw new Error(data.error || 'Ocorreu um erro na requisição.');
       }
-    } catch (err) {
-      console.error(err);
-      setErrorMsg('Connection error, try again later.');
+
+      if (isLogin) {
+        setSuccessMessage('Login realizado! Redirecionando...');
+
+        // window.location.href = '/dashboard'; 
+      } else {
+        setSuccessMessage('Account Created! ');
+        setPassword('');
+        setRepeatPassword('');
+        setIsLogin(true);
+      }
+
+    } catch (err: unknown) {
+      if (err instanceof Error) {
+        setErrorMessage(err.message);
+      } else {
+        setErrorMessage('Erro de comunicação com o servidor')
+      }
     } finally {
       setIsLoading(false);
     }
@@ -56,18 +80,18 @@ export default function Home() {
       {/* blobs */}
       <div className="absolute inset-0 z-0 pointer-events-none">
          <div 
-          className={`absolute top-0 left-0 w-[500px] h-[500px] rounded-full mix-blend-multiply filter blur-[100px] opacity-60 transition-colors duration-700 ease-in-out -translate-x-1/2 -translate-y-1/2 ${
+          className={`absolute top-0 left-0 w-125 h-125 rounded-full mix-blend-multiply filter blur-[100px] opacity-60 transition-colors duration-700 ease-in-out -translate-x-1/2 -translate-y-1/2 ${
             isLogin ? 'bg-[#DCFCE7]' : 'bg-[#FFE5B4]'
           }`} 
         />
         <div 
-          className={`absolute bottom-0 right-0 w-[600px] h-[600px] rounded-full mix-blend-multiply filter blur-[100px] opacity-60 transition-colors duration-700 ease-in-out translate-x-1/3 translate-y-1/3 ${
+          className={`absolute bottom-0 right-0 w-150 h-150 rounded-full mix-blend-multiply filter blur-[100px] opacity-60 transition-colors duration-700 ease-in-out translate-x-1/3 translate-y-1/3 ${
             isLogin ? 'bg-[#bbf7d0]' : 'bg-[#FFDDA1]'
           }`} 
         />
 
         <div 
-          className={`absolute top-1/2 left-1/2 w-[400px] h-[400px] rounded-full mix-blend-multiply filter blur-[80px] opacity-50 transition-colors duration-700 ease-in-out -translate-x-1/2 -translate-y-1/2 ${
+          className={`absolute top-1/2 left-1/2 w-100 h-100 rounded-full mix-blend-multiply filter blur-[80px] opacity-50 transition-colors duration-700 ease-in-out -translate-x-1/2 -translate-y-1/2 ${
             isLogin ? 'bg-[#86efac]' : 'bg-[#FFC96F]'
           }`} 
         />
@@ -104,6 +128,18 @@ export default function Home() {
               {isLogin ? 'Welcome Back' : 'Start priowlritizing your tasks'}
             </h2>
 
+            {/* error alerts */}
+            {errorMessage && (
+              <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm text-center font-bold animate-in fade-in">
+                {errorMessage}
+              </div>
+            )}
+            {successMessage && (
+              <div className="mb-4 p-3 rounded-xl bg-green-50 border border-green-200 text-green-700 text-sm text-center font-bold animate-in fade-in">
+                {successMessage}
+              </div>
+            )}
+
             {/* form */}
             <form className="space-y-5" onSubmit={handleSubmit}>
               
@@ -117,6 +153,8 @@ export default function Home() {
                     id="name"
                     type="text"
                     placeholder="Enter your name"
+                    value={username}
+                    onChange={(e) => setName(e.target.value)}
                     className="w-full px-4 py-3 bg-white/90 rounded-xl border border-slate-200 focus:outline-none focus:ring-1 focus:ring-black focus:border-black transition-colors placeholder:text-slate-400"
                     required
                   />
@@ -175,6 +213,8 @@ export default function Home() {
                       id="repeat-password"
                       type={showRepeatPassword ? "text" : "password"}
                       placeholder="Confirm your password"
+                      value={repeatPassword}
+                      onChange={(e) => setRepeatPassword(e.target.value)}
                       className="w-full pl-4 pr-12 py-3 bg-white/90 rounded-xl border border-slate-200 focus:outline-none focus:ring-1 focus:ring-black focus:border-black transition-colors placeholder:text-slate-400"
                       required
                     />
@@ -190,21 +230,27 @@ export default function Home() {
               )}
 
               {/* submit button */}
-              <div className="pt-2">
-                <button
-                  type="submit"
-                  className="w-full bg-[#111111] hover:bg-black text-white font-bold py-3.5 px-4 rounded-xl transition-colors shadow-lg shadow-slate-200/50"
-                >
-                  {isLogin ? 'Sign In' : 'Sign Up'}
-                </button>
-              </div>
+              <div className="pt-3">
+                  <button
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full bg-[#111111] hover:bg-black disabled:bg-slate-400 text-white font-bold py-3.5 px-4 rounded-xl transition-colors shadow-lg shadow-slate-200/50"
+                  >
+                    {isLoading ? 'Processing...' : (isLogin ? 'Sign In' : 'Sign Up')}
+                  </button>
+                </div>
             </form>
 
             {/* redirects to sign in page */}
             <div className="mt-8 text-center text-sm text-slate-600">
               {isLogin ? "Doesn't have an account? " : "Already have an account? "}
               <button
-                onClick={() => setIsLogin(!isLogin)}
+                type="button"
+                onClick={() => {
+                  setIsLogin(!isLogin);
+                  setErrorMessage('');
+                  setSuccessMessage('');
+                }}
                 className="font-bold text-slate-900 underline hover:text-slate-700 transition-colors focus:outline-none"
               >
                 {isLogin ? 'Sign Up' : 'Sign In'}
@@ -219,7 +265,7 @@ export default function Home() {
           <div className="relative z-10 animate-in fade-in zoom-in duration-700">
             <Image 
               src="/logo-1.svg" 
-              alt="Coruja Lendo" 
+              alt="Logo Priowl" 
               width={400}
               height={400}
               priority
