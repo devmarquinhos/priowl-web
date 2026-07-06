@@ -1,1 +1,12 @@
 @import "tailwindcss";
+
+@layer utilities {
+  @keyframes blob-fade {
+    0% { opacity: 0; transform: scale(0.8); }
+    100% { opacity: 0.6; transform: scale(1); }
+  }
+  
+  .animate-blob-fade {
+    animation: blob-fade 1.5s ease-out forwards;
+  }
+}

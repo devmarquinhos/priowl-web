@@ -1,278 +1,162 @@
-"use client"
-import React, { useState } from 'react';
-import { Eye, EyeOff } from 'lucide-react';
+import React from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 
 export default function Home() {
-  // login / register page states
-  const [isLogin, setIsLogin] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showRepeatPassword, setShowRepeatPassword] = useState(false);
-
-  // form data states
-  const [username, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [repeatPassword, setRepeatPassword] = useState('');
-
-  // feedback states
-  const [errorMessage, setErrorMessage] = useState('');
-  const [successMessage, setSuccessMessage] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrorMessage('');
-    setSuccessMessage('');
-
-    if (!isLogin && password !== repeatPassword) {
-      setErrorMessage('As senhas digitadas não coincidem.');
-      return;
-    }
-
-    setIsLoading(true);
-
-    try {
-      const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
-      const bodyPayload = isLogin 
-        ? { email, password } 
-        : { username, email, password };
-
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(bodyPayload)
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Ocorreu um erro na requisição.');
-      }
-
-      if (isLogin) {
-        setSuccessMessage('Login realizado! Redirecionando...');
-
-        // window.location.href = '/dashboard'; 
-      } else {
-        setSuccessMessage('Account Created! ');
-        setPassword('');
-        setRepeatPassword('');
-        setIsLogin(true);
-      }
-
-    } catch (err: unknown) {
-      if (err instanceof Error) {
-        setErrorMessage(err.message);
-      } else {
-        setErrorMessage('Erro de comunicação com o servidor')
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   return (
-    <div className={`min-h-screen relative overflow-hidden transition-colors duration-700 ease-in-out text-slate-900 ${
-      isLogin ? 'bg-[#F2FCF3]' : 'bg-[#FFF8EE]'
-    }`}>
-      
-      {/* blobs */}
-      <div className="absolute inset-0 z-0 pointer-events-none">
-         <div 
-          className={`absolute top-0 left-0 w-125 h-125 rounded-full mix-blend-multiply filter blur-[100px] opacity-60 transition-colors duration-700 ease-in-out -translate-x-1/2 -translate-y-1/2 ${
-            isLogin ? 'bg-[#DCFCE7]' : 'bg-[#FFE5B4]'
-          }`} 
-        />
-        <div 
-          className={`absolute bottom-0 right-0 w-150 h-150 rounded-full mix-blend-multiply filter blur-[100px] opacity-60 transition-colors duration-700 ease-in-out translate-x-1/3 translate-y-1/3 ${
-            isLogin ? 'bg-[#bbf7d0]' : 'bg-[#FFDDA1]'
-          }`} 
-        />
+    <div className="min-h-screen bg-white text-slate-900 relative">
+      {/* Grid Background */}
+      <div 
+        className="absolute inset-0 z-0 pointer-events-none opacity-40"
+        style={{
+          backgroundImage: 'linear-gradient(#f1f5f9 1px, transparent 1px), linear-gradient(90deg, #f1f5f9 1px, transparent 1px)',
+          backgroundSize: '4rem 4rem'
+        }}
+      />
 
-        <div 
-          className={`absolute top-1/2 left-1/2 w-100 h-100 rounded-full mix-blend-multiply filter blur-[80px] opacity-50 transition-colors duration-700 ease-in-out -translate-x-1/2 -translate-y-1/2 ${
-            isLogin ? 'bg-[#86efac]' : 'bg-[#FFC96F]'
-          }`} 
-        />
-
-        {/* feather pattern (mobile) */}
-        <div className="absolute inset-0 opacity-[0.03]" style={{ 
-            backgroundImage: `url("/feather-1.svg")`,
-            backgroundSize: '120px 120px',
-            transform: 'rotate(-15deg) scale(2.0)'
-          }}
-        />
-      </div>
-
-      <div className="relative z-10 min-h-screen lg:grid lg:grid-cols-2">
-        {/* left side */}
-        <div className="flex flex-col justify-center items-center px-6 py-12 sm:px-12 lg:px-16 xl:px-24 min-h-screen lg:bg-white transition-colors duration-700">
-          
-          <div className="w-full max-w-sm">
-            {/* feather icon */}
-            <div className="flex flex-col items-center justify-center mb-10">
-              <Image 
-                src="/feather-1.svg"
-                alt='Feather Logo'
-                width={80}
-                height={80}
-                priority
-                className="mb-2"
-              />
-              <h1 className="text-4xl font-extrabold tracking-tight">Priowl</h1>
-            </div>
-
-            {/* title */}
-            <h2 className="text-2xl font-bold text-center mb-8">
-              {isLogin ? 'Welcome Back' : 'Start priowlritizing your tasks'}
-            </h2>
-
-            {/* error alerts */}
-            {errorMessage && (
-              <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-600 text-sm text-center font-bold animate-in fade-in">
-                {errorMessage}
-              </div>
-            )}
-            {successMessage && (
-              <div className="mb-4 p-3 rounded-xl bg-green-50 border border-green-200 text-green-700 text-sm text-center font-bold animate-in fade-in">
-                {successMessage}
-              </div>
-            )}
-
-            {/* form */}
-            <form className="space-y-5" onSubmit={handleSubmit}>
-              
-              {/* name input */}
-              {!isLogin && (
-                <div className="animate-in fade-in slide-in-from-top-2 duration-300">
-                  <label className="block text-sm font-bold mb-1.5" htmlFor="name">
-                    Name
-                  </label>
-                  <input
-                    id="name"
-                    type="text"
-                    placeholder="Enter your name"
-                    value={username}
-                    onChange={(e) => setName(e.target.value)}
-                    className="w-full px-4 py-3 bg-white/90 rounded-xl border border-slate-200 focus:outline-none focus:ring-1 focus:ring-black focus:border-black transition-colors placeholder:text-slate-400"
-                    required
-                  />
-                </div>
-              )}
-
-              {/* email input */}
-              <div>
-                <label className="block text-sm font-bold mb-1.5" htmlFor="email">
-                  E-mail
-                </label>
-                <input
-                  id="email"
-                  type="email"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter your e-mail"
-                  className="w-full px-4 py-3 bg-white/90 rounded-xl border border-slate-200 focus:outline-none focus:ring-1 focus:ring-black focus:border-black transition-colors placeholder:text-slate-400"
-                  required
-                />
-              </div>
-
-              {/* password input */}
-              <div>
-                <label className="block text-sm font-bold mb-1.5" htmlFor="password">
-                  Password
-                </label>
-                <div className="relative">
-                  <input
-                    id="password"
-                    type={showPassword ? "text" : "password"}
-                    placeholder="Enter your password"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full pl-4 pr-12 py-3 bg-white/90 rounded-xl border border-slate-200 focus:outline-none focus:ring-1 focus:ring-black focus:border-black transition-colors placeholder:text-slate-400"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors focus:outline-none"
-                  >
-                    {showPassword ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
-                  </button>
-                </div>
-              </div>
-
-              {/* repeat password input */}
-              {!isLogin && (
-                <div className="animate-in fade-in slide-in-from-top-2 duration-300">
-                  <label className="block text-sm font-bold mb-1.5" htmlFor="repeat-password">
-                    Repeat password
-                  </label>
-                  <div className="relative">
-                    <input
-                      id="repeat-password"
-                      type={showRepeatPassword ? "text" : "password"}
-                      placeholder="Confirm your password"
-                      value={repeatPassword}
-                      onChange={(e) => setRepeatPassword(e.target.value)}
-                      className="w-full pl-4 pr-12 py-3 bg-white/90 rounded-xl border border-slate-200 focus:outline-none focus:ring-1 focus:ring-black focus:border-black transition-colors placeholder:text-slate-400"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowRepeatPassword(!showRepeatPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors focus:outline-none"
-                    >
-                      {showRepeatPassword ? <Eye className="w-5 h-5" /> : <EyeOff className="w-5 h-5" />}
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* submit button */}
-              <div className="pt-3">
-                  <button
-                    type="submit"
-                    disabled={isLoading}
-                    className="w-full bg-[#111111] hover:bg-black disabled:bg-slate-400 text-white font-bold py-3.5 px-4 rounded-xl transition-colors shadow-lg shadow-slate-200/50"
-                  >
-                    {isLoading ? 'Processing...' : (isLogin ? 'Sign In' : 'Sign Up')}
-                  </button>
-                </div>
-            </form>
-
-            {/* redirects to sign in page */}
-            <div className="mt-8 text-center text-sm text-slate-600">
-              {isLogin ? "Doesn't have an account? " : "Already have an account? "}
-              <button
-                type="button"
-                onClick={() => {
-                  setIsLogin(!isLogin);
-                  setErrorMessage('');
-                  setSuccessMessage('');
-                }}
-                className="font-bold text-slate-900 underline hover:text-slate-700 transition-colors focus:outline-none"
-              >
-                {isLogin ? 'Sign Up' : 'Sign In'}
-              </button>
-            </div>
-
-          </div>
-        </div>
-
-        {/* Priowl Logo */}
-        <div className="hidden lg:flex relative flex-col justify-center items-center">
-          <div className="relative z-10 animate-in fade-in zoom-in duration-700">
+      {/* Main Content Wrapper */}
+      <div className="relative z-10 flex flex-col min-h-screen">
+        
+        {/* Header */}
+        <header className="flex items-center justify-between px-6 py-6 lg:px-12 max-w-7xl w-full mx-auto">
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-2">
             <Image 
-              src="/logo-1.svg" 
-              alt="Logo Priowl" 
-              width={400}
-              height={400}
-              priority
-              className="object-contain drop-shadow-2xl" 
+              src="/feather-1.svg" 
+              alt="Priowl Logo" 
+              width={32} 
+              height={32} 
+              className="object-contain"
             />
+            <span className="text-xl font-extrabold tracking-tight">Priowl</span>
+          </Link>
+
+          {/* Center Navigation (Desktop) */}
+          <nav className="hidden md:flex items-center gap-8 text-sm font-bold">
+            <Link href="#about" className="hover:text-slate-600 transition-colors">About</Link>
+            <Link href="#pricing" className="hover:text-slate-600 transition-colors">Pricing</Link>
+            <Link href="#docs" className="hover:text-slate-600 transition-colors">Docs</Link>
+          </nav>
+
+          {/* Auth Actions */}
+          <div className="flex items-center gap-4 text-sm font-bold">
+            <Link href="/login" className="hover:text-slate-600 transition-colors">
+              Login
+            </Link>
+            <Link 
+              href="/register" 
+              className="bg-[#111111] text-white px-5 py-2.5 rounded-full hover:bg-black transition-colors"
+            >
+              Sign up
+            </Link>
           </div>
-        </div>
+        </header>
+
+        {/* Hero Section */}
+        <main className="flex-grow flex flex-col items-center pt-20 pb-16 px-6 max-w-7xl mx-auto w-full">
+          <div className="max-w-3xl text-center space-y-6 mb-12">
+            <h1 className="text-5xl lg:text-7xl font-bold tracking-tight leading-tight">
+              Everything you need <br className="hidden lg:block" /> to manage tasks
+            </h1>
+            
+            <p className="text-lg lg:text-xl text-slate-700 max-w-2xl mx-auto font-medium">
+              Priowl is a powerful personal compendium to help you organize, 
+              categorize, and track your tasks efficiently at every stage of your workflow.
+            </p>
+
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 pt-4">
+              <Link 
+                href="/register" 
+                className="bg-[#111111] text-white px-8 py-3.5 rounded-xl font-bold hover:bg-black transition-colors w-full sm:w-auto"
+              >
+                Get Started
+              </Link>
+              <Link 
+                href="#pricing" 
+                className="bg-transparent text-slate-900 border border-slate-300 px-8 py-3.5 rounded-xl font-bold hover:bg-slate-50 transition-colors w-full sm:w-auto"
+              >
+                Know the Plans
+              </Link>
+            </div>
+
+            <div className="pt-8">
+              <div className="inline-flex items-center gap-2 bg-white border border-slate-200 rounded-full px-6 py-2 text-sm font-medium shadow-sm">
+                <span className="italic">Enterprise</span> needs?{" "}
+                <a href="#contact" className="underline font-bold hover:text-slate-600">Talk to our team</a>
+              </div>
+            </div>
+          </div>
+
+          {/* Feature 1 */}
+          <div className="w-full grid lg:grid-cols-2 gap-12 items-center py-16">
+            <div className="bg-slate-200 rounded-2xl aspect-[4/3] w-full shadow-inner">
+              {/* Placeholder para a imagem/dashboard do app */}
+            </div>
+            <div className="space-y-4 max-w-lg lg:pl-8">
+              <h2 className="text-3xl lg:text-4xl font-bold">#1 ToDo List App</h2>
+              <p className="text-slate-700 font-medium leading-relaxed">
+                Organize your tasks and subtasks by priority and category in an agile way. 
+                The system offers complete control over your workflow with intelligent filters 
+                focused on deadlines.
+              </p>
+            </div>
+          </div>
+
+          {/* Feature 2 */}
+          <div className="w-full grid lg:grid-cols-2 gap-12 items-center py-16">
+            <div className="space-y-4 max-w-lg order-2 lg:order-1">
+              <h2 className="text-3xl lg:text-4xl font-bold">Analytics</h2>
+              <p className="text-slate-700 font-medium leading-relaxed">
+                Track all your progress and have access to a complete dashboard for data analytics. 
+                Need a formal report? We got you, PDF reports is possible.
+              </p>
+            </div>
+            <div className="bg-slate-200 rounded-2xl aspect-[4/3] w-full shadow-inner order-1 lg:order-2">
+              {/* Placeholder para a imagem de analytics */}
+            </div>
+          </div>
+        </main>
+
+        {/* Footer */}
+        <footer className="border-t border-slate-200 bg-white relative z-10">
+          <div className="max-w-7xl mx-auto w-full px-6 py-12 grid grid-cols-1 md:grid-cols-3 gap-12">
+            
+            {/* Footer Logo */}
+            <div className="flex flex-col items-start justify-center border-r border-slate-100 pr-8">
+              <Image 
+                src="/logo-1.svg" 
+                alt="Priowl Logo" 
+                width={100} 
+                height={100} 
+                className="mb-4 object-contain"
+              />
+              <span className="text-4xl font-extrabold tracking-tight">Priowl</span>
+            </div>
+
+            {/* Footer Links */}
+            <div className="flex flex-col justify-center space-y-4 font-bold">
+              <Link href="#about" className="hover:text-slate-600 transition-colors">About</Link>
+              <Link href="#pricing" className="hover:text-slate-600 transition-colors">Pricing</Link>
+              <Link href="#docs" className="hover:text-slate-600 transition-colors">Documentation</Link>
+              <Link href="#contact" className="hover:text-slate-600 transition-colors">Contact Us</Link>
+            </div>
+
+            {/* Footer Credits */}
+            <div className="flex flex-col justify-between font-bold text-slate-900">
+              <p className="text-lg leading-snug">
+                All rights reserved for Marcos Emanuel and Melkysedeke Costa
+              </p>
+              <div className="flex items-center justify-between mt-8 pt-4">
+                <div className="space-x-4">
+                  <Link href="#terms" className="hover:text-slate-600 transition-colors">Terms</Link>
+                  <Link href="#contact" className="hover:text-slate-600 transition-colors">Contact</Link>
+                </div>
+                <span>2026</span>
+              </div>
+            </div>
+
+          </div>
+        </footer>
 
       </div>
     </div>
