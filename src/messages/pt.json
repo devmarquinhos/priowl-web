@@ -1,0 +1,33 @@
+{
+  "Landing": {
+    "nav_sobre": "Sobre",
+    "nav_funcionalidades": "Funcionalidades",
+    "nav_precos": "Preços/Planos",
+    "nav_docs": "Docs",
+    "btn_entrar": "Entrar",
+    "btn_cadastrar": "Cadastrar",
+    "hero_title": "Tudo o que você precisa\npara gerenciar tarefas",
+    "hero_subtitle": "Priowl é o seu compêndio pessoal para organizar, categorizar e\nacompanhar suas tarefas com eficiência em todas as etapas do seu\nfluxo de trabalho.",
+    "btn_comecar": "Começar Gratuitamente",
+    "btn_planos": "Conhecer Planos",
+    "link_corporativo": "Necessidades corporativas? Fale com nosso time",
+    "feat1_tag": "#1 App de ToDo List",
+    "feat1_title": "PRIORIDADE",
+    "feat1_desc": "Organize suas tarefas e subtarefas por prioridade e categoria de forma ágil. Nosso sistema oferece controle total sobre seu fluxo com filtros inteligentes focados em prazos.",
+    "feat1_bullet1": "Ordenação Inteligente de Prazos",
+    "feat1_bullet2": "Hierarquias Profundas de Subtarefas",
+    "feat1_bullet3": "Visualização em Listas",
+    "feat2_title": "Análise de Dados",
+    "feat2_desc": "Acompanhe todo o seu progresso e tenha acesso a um painel completo para análise de dados. Precisa de um relatório formal? Oferecemos exportação completa para PDF.",
+    "feat2_link": "Explorar Painel →",
+    "chart_label": "PRODUTIVIDADE TOTAL",
+    "footer_slogan": "A companheira luminosa para sua jornada diária de produtividade.",
+    "footer_nav": "NAVEGAÇÃO",
+    "footer_inst": "INSTITUCIONAL",
+    "footer_suporte": "Suporte/Contato",
+    "footer_termos": "Termos de Uso",
+    "footer_privacidade": "Privacidade",
+    "footer_copy": "Todos os direitos reservados para Marcos Emanuel e Melkysedeke Costa",
+    "btn_contato_suporte": "CONTATO SUPORTE"
+  }
+}

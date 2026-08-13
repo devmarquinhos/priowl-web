@@ -1,0 +1,44 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    /* Modo Claro */
+    --background: #F9F7F5;
+    --foreground: #121212;
+    --card: #FFFFFF;
+    
+    /* Cores Principais (Padrão) */
+    --color-primary: #D6A628;
+    --color-primary-hover: #B98C03;
+    
+    /* Cores Secundárias e Neutras (Paleta Fixa) */
+    --color-secondary: #B85B33;
+    --color-secondary-hover: #9B451F;
+    --color-tertiary: #8C7364;
+    --color-tertiary-hover: #4E4635;
+    --color-muted: #5E5E5E;
+  }
+
+  .dark {
+    /* Modo Escuro */
+    --background: #121212;
+    --foreground: #F9F7F5;
+    --card: #1A1A1A;
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+  }
+}
+
+@layer utilities {
+  @keyframes blob-fade {
+    0% { opacity: 0; transform: scale(0.8); }
+    100% { opacity: 0.6; transform: scale(1); }
+  }
+  
+  .animate-blob-fade {
+    animation: blob-fade 1.5s ease-out forwards;
+  }
+}
