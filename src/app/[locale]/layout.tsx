@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 import { notFound } from "next/navigation";
-import { ThemeProvider } from "@/src/providers/ThemeProvider";
+import { ThemeProvider } from "@/providers/ThemeProvider";
 import "../globals.css"; 
 
 export const metadata: Metadata = {
