@@ -1,12 +1,14 @@
-"use server"; // <-- Isso diz ao Next.js que essas funções rodam EXCLUSIVAMENTE no servidor
+"use server";
 
 import { cookies } from "next/headers";
-import { revalidateTag } from "next/cache";
+import { revalidateTag, revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 
 export async function atualizarPerfilAction(formData: FormData) {
   const username = formData.get("username") as string;
   const email = formData.get("email") as string;
 
+  // No Next.js mais recente, cookies() precisa de 'await'
   const cookieStore = await cookies();
   const token = cookieStore.get("priowl_token")?.value;
 
@@ -17,19 +19,25 @@ export async function atualizarPerfilAction(formData: FormData) {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      body: JSON.stringify({ username, email }), // Monta o JSON que o Java espera (UpdateProfileRequest)
+      body: JSON.stringify({ username, email }),
     });
 
     if (!res.ok) {
       throw new Error("Falha ao atualizar dados");
     }
 
-    // A MÁGICA ACONTECE AQUI! 
-    // Dizemos para o Next.js: "Lembra daquele cache com a tag 'user-profile'? Joga fora e busca de novo!"
+    // @ts-expect-error - Bug de tipagem interno do Next.js na versão atual
     revalidateTag("user-profile");
     
   } catch (error) {
     console.error("Erro na Server Action:", error);
-    // Aqui você poderia retornar um objeto com erro para exibir na tela
   }
+}
+
+export async function logoutAction() {
+  const cookieStore = await cookies();
+  
+  cookieStore.delete("priowl_token"); 
+  
+  redirect("/auth?mode=login");
 }

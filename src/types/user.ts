@@ -1,5 +1,11 @@
 // src/types/user.ts
 
+export interface UserPreferences {
+  theme: 'light' | 'dark' | 'system';
+  accentColor: 'primary' | 'secondary' | 'tertiary' | 'muted';
+  language: string;
+}
+
 /**
  * Retorno do endpoint GET /api/users/me e PUT /api/users/me
  * Equivalente ao UserProfileResponse.java
@@ -10,6 +16,7 @@ export interface UserProfileResponse {
   email: string;
   // Adicione outros campos que seu Java retorna (ex: avatarUrl, role, etc)
   isAdmin?: boolean; 
+  preferences?: UserPreferences;
 }
 
 /**

@@ -7,21 +7,18 @@ interface AvatarProps {
   readonly fallbackInitials: string;
   readonly size?: "sm" | "md" | "lg";
   readonly className?: string;
-  readonly href?: string; // 2. Nova propriedade opcional para o redirecionamento
+  readonly href?: string; 
 }
 
 export function Avatar({ src, alt, fallbackInitials, size = "md", className = "", href }: Readonly<AvatarProps>) {
   const sizeClasses = {
-    // 3. Adicionado tamanhos de borda proporcionais
     sm: "w-8 h-8 text-xs border-[1.5px]",
     md: "w-10 h-10 text-sm border-2",
     lg: "w-16 h-16 text-lg border-[3px]",
   };
 
-  // 4. Adicionado border-primary para puxar a cor do tema
   const baseClasses = "relative flex items-center justify-center rounded-full overflow-hidden shrink-0 bg-primary/10 text-primary font-bold dark:bg-primary/20 dark:text-primary border-primary";
 
-  // O conteúdo do Avatar (Imagem ou Iniciais)
   const avatarContent = (
     <div className={`${baseClasses} ${sizeClasses[size]} ${className}`}>
       {src ? (
@@ -38,7 +35,6 @@ export function Avatar({ src, alt, fallbackInitials, size = "md", className = ""
     </div>
   );
 
-  // 5. Se foi passado um link (href), envelopamos o Avatar no componente Link
   if (href) {
     return (
       <Link 
@@ -51,6 +47,5 @@ export function Avatar({ src, alt, fallbackInitials, size = "md", className = ""
     );
   }
 
-  // Se não tem link, retorna apenas o Avatar normal
   return avatarContent;
 }

@@ -108,10 +108,10 @@ function AuthContent() {
           
           <div className="flex flex-col items-center text-center mb-6">
             <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" className="mb-1 text-[#121212]" xmlns="http://www.w3.org/2000/svg">
-              <path d="M21.58 3.51c-1.39-1.3-4.23-.93-6.6.7-1.12.77-2.07 1.69-2.73 2.5-3.08 1.4-5.26 3.6-6.19 6.22-1.22 3.42-.51 7.21.36 8.52.29.43.92.51 1.25.18l3.15-3.15c.31-.31.76-.36 1.12-.13l.87.52c.36.21.84.18 1.16-.09l1.86-1.57c.32-.27.42-.72.23-1.1l-.81-1.63c-.17-.34-.14-.76.08-1.07l1.7-2.42c.26-.37.76-.5 1.18-.3l1.86.87c.36.17.79.1.1.06-.21l2.42-2.1c.31-.27.42-.71.26-1.09l-1.01-2.44c-.16-.39-.08-.84.2-1.16l2.13-2.4c.56-.63.95-1.55.93-2.43-.01-.73-.24-1.35-.61-1.72z" />
+              <path d="M21.58 3.51 c -1.39 -1.3 -4.23 -.93 -6.6 .7 c -1.12 .77 -2.07 1.69 -2.73 2.5 c -3.08 1.4 -5.26 3.6 -6.19 6.22 c -1.22 3.42 -.51 7.21 .36 8.52 c .29 .43 .92 .51 1.25 .18 l 3.15 -3.15 c .31 -.31 .76 -.36 1.12 -.13 l .87 .52 c .36 .21 .84 .18 1.16 -.09 l 1.86 -1.57 c .32 -.27 .42 -.72 .23 -1.1 l -.81 -1.63 c -.17 -.34 -.14 -.76 .08 -1.07 l 1.7 -2.42 c .26 -.37 .76 -.5 1.18 -.3 l 1.86 .87 c .36 .17 .79 .1 .1 .06 -.21 l 2.42 -2.1 c .31 -.27 .42 -.71 .26 -1.09 l -1.01 -2.44 c -.16 -.39 -.08 -.84 .2 -1.16 l 2.13 -2.4 c .56 -.63 .95 -1.55 .93 -2.43 c -.01 -.73 -.24 -1.35 -.61 -1.72 z" />
             </svg>
             <h1 className="text-3xl font-bold tracking-tight mb-2">Priowl</h1>
-            
+                      
             <h2 className="text-lg font-semibold">
               {isLogin ? (
                 <>
@@ -179,7 +179,7 @@ function AuthContent() {
               <div className="flex justify-between items-center">
                 <label htmlFor="password" className="block text-sm font-bold text-[#121212]">Senha</label>
                 {isLogin && (
-                  <Link href="/recuperar-senha" className="text-xs font-semibold text-gray-500 hover:text-black underline decoration-1 underline-offset-2 transition-colors">
+                  <Link href="/recover-password" className="text-xs font-semibold text-gray-500 hover:text-black underline decoration-1 underline-offset-2 transition-colors">
                     Esqueceu sua senha?
                   </Link>
                 )}

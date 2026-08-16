@@ -13,7 +13,7 @@ export function Pagination({ currentPage, totalPages, onPageChange }: Pagination
         type="button"
         onClick={() => onPageChange(currentPage - 1)}
         disabled={currentPage === 1}
-        className="p-2 rounded text-gray-500 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed dark:text-gray-400 dark:hover:bg-gray-800 transition-colors"
+        className="p-2 rounded text-muted hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed dark:hover:bg-gray-800 transition-colors"
         aria-label="Página anterior"
       >
         &lt;
@@ -27,7 +27,7 @@ export function Pagination({ currentPage, totalPages, onPageChange }: Pagination
           className={`w-8 h-8 rounded text-sm font-medium transition-colors ${
             currentPage === page
               ? "bg-primary text-white"
-              : "text-gray-700 hover:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-800"
+              : "text-foreground hover:bg-gray-100 dark:hover:bg-gray-800"
           }`}
           aria-current={currentPage === page ? "page" : undefined}
         >
@@ -39,7 +39,7 @@ export function Pagination({ currentPage, totalPages, onPageChange }: Pagination
         type="button"
         onClick={() => onPageChange(currentPage + 1)}
         disabled={currentPage === totalPages}
-        className="p-2 rounded text-gray-500 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed dark:text-gray-400 dark:hover:bg-gray-800 transition-colors"
+        className="p-2 rounded text-muted hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed dark:hover:bg-gray-800 transition-colors"
         aria-label="Próxima página"
       >
         &gt;

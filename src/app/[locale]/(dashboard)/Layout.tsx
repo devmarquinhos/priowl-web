@@ -6,8 +6,7 @@ export default async function BaseLayout({ children }: { children: React.ReactNo
   const user = await getUserProfile();
 
   return (
-    <div className="flex h-screen w-full overflow-hidden bg-[#F8F9FA]">
-      {/* Passamos o usuário via prop para a Sidebar Client Component */}
+    <div className="flex h-screen w-full overflow-hidden bg-background text-foreground transition-colors duration-200">
       <Sidebar user={user} />
 
       <div className="flex flex-1 flex-col overflow-hidden">

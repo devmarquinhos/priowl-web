@@ -6,7 +6,6 @@ import {
   LayoutGrid, 
   BarChart2, 
   Settings, 
-  Landmark, 
   Wallet, 
   ClipboardList, 
   ShoppingBag, 
@@ -16,7 +15,7 @@ import {
   ChevronRight
 } from "lucide-react";
 import { Button } from "@/components/ui/Button"; 
-import { UserProfileResponse } from "@/types/user"; // 1. Importe a tipagem aqui
+import { UserProfileResponse } from "@/types/user";
 
 interface SideBarProps {
   user: UserProfileResponse | null; 
@@ -24,12 +23,11 @@ interface SideBarProps {
 
 export default function Sidebar({ user }: SideBarProps) {
   const pathname = usePathname();
-  const brandColor = "#8A6D3B"; 
 
   const mainNav = [
     { name: "Painel", href: "/dashboard", icon: LayoutGrid },
-    { name: "Relatórios", href: "/relatorios", icon: BarChart2 },
-    { name: "Configurações", href: "/configuracoes", icon: Settings },
+    { name: "Relatórios", href: "/reports", icon: BarChart2 },
+    { name: "Configurações", href: "/settings", icon: Settings },
   ];
 
   const categories = [
@@ -40,50 +38,44 @@ export default function Sidebar({ user }: SideBarProps) {
   ];
 
   return (
-    <aside className="flex h-full w-[260px] flex-col border-r border-gray-200 bg-[#FCFCFC]">
+    <aside className="flex h-full w-[260px] flex-col border-r border-border bg-card transition-colors duration-200">
       
-      {/* 1. Área do Usuário (Topo) */}
-      <div className="flex items-center gap-3 border-b border-gray-100 p-6">
-        <div 
-          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md text-white"
-          style={{ backgroundColor: brandColor }}
-        >
-          {/* Exibe a inicial do nome ou ícone */}
-          <span className="font-bold">
-            {user?.username ? user.username.charAt(0).toUpperCase() : "U"}
-          </span>
+      {/* Perfil no Topo - Altura fixa de 80px */}
+      <div className="flex h-[80px] shrink-0 items-center gap-3 border-b border-border px-6">
+        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary text-white font-bold">
+          {user?.username ? user.username.charAt(0).toUpperCase() : "U"}
         </div>
         <div className="flex flex-col overflow-hidden">
-          {/* Dados dinâmicos aqui */}
-          <span className="truncate text-sm font-bold text-gray-900">
+          <span className="truncate text-sm font-bold text-foreground">
             {user?.username || "Usuário"}
           </span>
-          <span className="truncate text-xs text-gray-500">
+          <span className="truncate text-xs text-muted">
             {user?.email || "Carregando..."}
           </span>
         </div>
       </div>
 
-      {/* 2. Menu Principal */}
+      {/* Navegação Principal */}
       <nav className="mt-4 flex flex-col gap-1">
         {mainNav.map((item) => {
-          // Verifica se a rota atual começa com o href do item para marcá-lo como ativo
-          const isActive = pathname?.startsWith(item.href);
+          const isActive = pathname?.includes(item.href);
 
           return (
             <Link
               key={item.name}
               href={item.href}
-              className={`flex items-center gap-3 px-6 py-3 text-sm font-medium transition-colors ${
+              // CORREÇÃO 2: Fallback no background caso o bg-primary/10 não funcione com cores Hexadecimais
+              className={`flex items-center gap-3 border-l-4 px-6 py-3 text-sm font-medium transition-colors ${
                 isActive 
-                  ? "border-l-4 bg-[#F4EFE6] text-gray-900" 
-                  : "border-l-4 border-transparent text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                  ? "border-primary text-primary" 
+                  : "border-transparent text-muted hover:bg-muted/20 hover:text-foreground"
               }`}
-              style={{ borderLeftColor: isActive ? brandColor : "transparent" }}
+              // Adicionamos o background via style para garantir que a opacidade de 10% funcione com sua variável HEX
+              style={isActive ? { backgroundColor: "color-mix(in srgb, var(--color-primary) 10%, transparent)" } : {}}
             >
               <item.icon 
                 size={20} 
-                className={isActive ? "text-gray-900" : "text-gray-400"} 
+                className={isActive ? "text-primary" : "text-muted"} 
               />
               {item.name}
             </Link>
@@ -91,34 +83,32 @@ export default function Sidebar({ user }: SideBarProps) {
         })}
       </nav>
 
-      <div className="mx-6 my-4 border-t border-gray-100"></div>
+      <div className="mx-6 my-4 border-t border-border"></div>
 
-      {/* 3. Categorias */}
+      {/* Categorias */}
       <div className="flex flex-1 flex-col px-6">
-        <h3 className="mb-4 text-xs font-bold tracking-widest text-gray-400">
+        <h3 className="mb-4 text-xs font-bold tracking-widest text-muted">
           CATEGORIAS
         </h3>
         
         <ul className="flex flex-col gap-3">
           {categories.map((category) => (
             <li key={category.name} className="flex cursor-pointer items-center justify-between group">
-              <div className="flex items-center gap-3 text-sm font-medium text-gray-700 transition-colors group-hover:text-gray-900">
-                <category.icon size={18} style={{ color: brandColor }} />
+              <div className="flex items-center gap-3 text-sm font-medium text-muted transition-colors group-hover:text-foreground">
+                <category.icon size={18} className="text-primary" />
                 {category.name}
               </div>
-              <span className="text-xs font-semibold text-gray-400">
+              <span className="text-xs font-semibold text-muted">
                 {category.count}
               </span>
             </li>
           ))}
         </ul>
 
-        {/* Botão de Nova Categoria */}
         <div className="mt-6">
           <Button 
-            className="flex w-full items-center justify-center gap-2 border-none font-medium text-white transition-opacity hover:opacity-90"
-            style={{ backgroundColor: brandColor }}
-            // onClick={() => openModalNovaCategoria()} <-- Integração futura com o NovaCategoriaModal.tsx
+            className="flex w-full items-center justify-center gap-2 border-none bg-primary text-white font-medium transition-opacity hover:opacity-90"
+            // onClick={() => openModalNovaCategoria()}
           >
             <Plus size={16} />
             Nova Categoria
@@ -126,22 +116,19 @@ export default function Sidebar({ user }: SideBarProps) {
         </div>
       </div>
 
-      {/* 4. Rodapé (Nível VIP) */}
+      {/* Card do Nível do Usuário */}
       <div className="p-4">
-        <div className="flex cursor-pointer items-center justify-between rounded-md border border-gray-200 bg-[#F8F6F1] p-3 transition-colors hover:bg-[#F3EFE6]">
+        <div className="flex cursor-pointer items-center justify-between rounded-md border border-border bg-muted/20 p-3 transition-colors hover:bg-muted/40">
           <div className="flex items-center gap-3">
-            <div 
-              className="flex h-8 w-8 items-center justify-center rounded bg-[#F4EFE6]"
-              style={{ color: brandColor }}
-            >
+            <div className="flex h-8 w-8 items-center justify-center rounded bg-primary/10 text-primary">
               <Award size={18} />
             </div>
             <div className="flex flex-col">
-              <span className="text-[10px] font-semibold uppercase text-gray-500">Seu Nível</span>
-              <span className="text-sm font-bold text-gray-900">VIP Ouro</span>
+              <span className="text-[10px] font-semibold uppercase text-muted">Seu Nível</span>
+              <span className="text-sm font-bold text-foreground">VIP Ouro</span>
             </div>
           </div>
-          <ChevronRight size={16} className="text-gray-400" />
+          <ChevronRight size={16} className="text-muted" />
         </div>
       </div>
 

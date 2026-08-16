@@ -29,7 +29,8 @@ export default async function RootLayout({
 
   return (
     <html lang={locale} suppressHydrationWarning>
-      <body className="antialiased min-h-screen bg-white dark:bg-gray-950 text-gray-900 dark:text-gray-100">
+      {/* CORREÇÃO AQUI: Trocado bg-white/dark:bg-gray-950 por bg-background e text-foreground */}
+      <body className="antialiased min-h-screen bg-background text-foreground transition-colors duration-200">
         <NextIntlClientProvider messages={messages}>
           <ThemeProvider>
             {children}

@@ -6,12 +6,16 @@ interface SearchBarProps {
 
 export default function SearchBar({ placeholder = "Pesquisar..." }: SearchBarProps) {
   return (
-    <div className="flex w-full items-center gap-2 rounded-md bg-[#F4F4F5] px-4 py-2.5 text-sm text-gray-700 transition-colors focus-within:bg-white focus-within:ring-2 focus-within:ring-[#8A6D3B]/20 focus-within:border focus-within:border-[#8A6D3B]">
-      <Search size={18} className="text-gray-400 shrink-0" />
+
+    <div className="group flex w-full items-center gap-2 rounded-md border border-transparent bg-background px-4 py-2.5 text-sm text-foreground transition-colors focus-within:bg-card focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary">
+      
+      <Search size={18} className="shrink-0 text-muted transition-colors group-focus-within:text-primary" />
+      
       <input
         type="text"
         placeholder={placeholder}
-        className="w-full bg-transparent outline-none placeholder:text-gray-400"
+
+        className="w-full bg-transparent outline-none placeholder:text-muted"
       />
     </div>
   );
