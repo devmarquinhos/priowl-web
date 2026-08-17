@@ -8,7 +8,7 @@ interface SettingsHeaderProps {
   user: UserProfileResponse | null;
 }
 
-export default function SettingsHeader({ user }: SettingsHeaderProps) {
+export default function SettingsHeader({ user }: Readonly<SettingsHeaderProps>) {
   const fallback = user?.username ? user.username.substring(0, 2).toUpperCase() : "US";
 
   return (

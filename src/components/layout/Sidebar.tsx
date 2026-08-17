@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useState, useEffect } from "react";
 import { 
   LayoutGrid, 
   BarChart2, 
@@ -14,8 +15,9 @@ import {
   Award,
   ChevronRight
 } from "lucide-react";
-import { Button } from "@/components/ui/Button"; 
+import { Button } from "@/components/ui/Button"; // Atenção à letra minúscula se aplicável
 import { UserProfileResponse } from "@/types/user";
+import { getMinhaAssinaturaAction } from "@/actions/user-actions"; // Importando sua Action
 
 interface SideBarProps {
   user: UserProfileResponse | null; 
@@ -23,6 +25,22 @@ interface SideBarProps {
 
 export default function Sidebar({ user }: SideBarProps) {
   const pathname = usePathname();
+  
+  // Estado para armazenar o nome do plano
+  const [planName, setPlanName] = useState<string>("Carregando...");
+
+  // Busca o plano assim que a Sidebar é montada
+  useEffect(() => {
+    async function fetchPlan() {
+      try {
+        const subscription = await getMinhaAssinaturaAction();
+        setPlanName(subscription?.planName || "Free");
+      } catch (error) {
+        setPlanName("Free");
+      }
+    }
+    fetchPlan();
+  }, []);
 
   const mainNav = [
     { name: "Painel", href: "/dashboard", icon: LayoutGrid },
@@ -46,9 +64,11 @@ export default function Sidebar({ user }: SideBarProps) {
           {user?.username ? user.username.charAt(0).toUpperCase() : "U"}
         </div>
         <div className="flex flex-col overflow-hidden">
-          <span className="truncate text-sm font-bold text-foreground">
-            {user?.username || "Usuário"}
-          </span>
+          <div className="flex items-center gap-2">
+            <span className="truncate text-sm font-bold text-foreground">
+              {user?.username || "Usuário"}
+            </span>
+          </div>
           <span className="truncate text-xs text-muted">
             {user?.email || "Carregando..."}
           </span>
@@ -64,13 +84,11 @@ export default function Sidebar({ user }: SideBarProps) {
             <Link
               key={item.name}
               href={item.href}
-              // CORREÇÃO 2: Fallback no background caso o bg-primary/10 não funcione com cores Hexadecimais
               className={`flex items-center gap-3 border-l-4 px-6 py-3 text-sm font-medium transition-colors ${
                 isActive 
                   ? "border-primary text-primary" 
                   : "border-transparent text-muted hover:bg-muted/20 hover:text-foreground"
               }`}
-              // Adicionamos o background via style para garantir que a opacidade de 10% funcione com sua variável HEX
               style={isActive ? { backgroundColor: "color-mix(in srgb, var(--color-primary) 10%, transparent)" } : {}}
             >
               <item.icon 
@@ -108,7 +126,6 @@ export default function Sidebar({ user }: SideBarProps) {
         <div className="mt-6">
           <Button 
             className="flex w-full items-center justify-center gap-2 border-none bg-primary text-white font-medium transition-opacity hover:opacity-90"
-            // onClick={() => openModalNovaCategoria()}
           >
             <Plus size={16} />
             Nova Categoria
@@ -116,20 +133,23 @@ export default function Sidebar({ user }: SideBarProps) {
         </div>
       </div>
 
-      {/* Card do Nível do Usuário */}
+      {/* Card do Plano do Usuário */}
       <div className="p-4">
-        <div className="flex cursor-pointer items-center justify-between rounded-md border border-border bg-muted/20 p-3 transition-colors hover:bg-muted/40">
-          <div className="flex items-center gap-3">
-            <div className="flex h-8 w-8 items-center justify-center rounded bg-primary/10 text-primary">
-              <Award size={18} />
+        {/* Link apontando para a página de configurações onde ele pode gerenciar a assinatura */}
+        <Link href="/settings?aba=assinatura">
+          <div className="flex cursor-pointer items-center justify-between rounded-md border border-border bg-muted/20 p-3 transition-colors hover:bg-muted/40">
+            <div className="flex items-center gap-3">
+              <div className="flex h-8 w-8 items-center justify-center rounded bg-primary/10 text-primary">
+                <Award size={18} />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[10px] font-semibold uppercase text-muted">Seu Plano</span>
+                <span className="text-sm font-bold text-foreground">{planName}</span>
+              </div>
             </div>
-            <div className="flex flex-col">
-              <span className="text-[10px] font-semibold uppercase text-muted">Seu Nível</span>
-              <span className="text-sm font-bold text-foreground">VIP Ouro</span>
-            </div>
+            <ChevronRight size={16} className="text-muted" />
           </div>
-          <ChevronRight size={16} className="text-muted" />
-        </div>
+        </Link>
       </div>
 
     </aside>

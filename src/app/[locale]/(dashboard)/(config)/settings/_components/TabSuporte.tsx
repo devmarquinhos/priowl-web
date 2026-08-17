@@ -47,7 +47,7 @@ export function TabSuporte() {
                 <Mail className="mt-1 shrink-0 text-primary" size={20} />
                 <div>
                   <p className="text-sm text-primary/80">E-mail Corporativo</p>
-                  <p className="font-bold text-primary">premium@priowl.com</p>
+                  <p className="font-bold text-primary">priowlsupport@gmail.com</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
