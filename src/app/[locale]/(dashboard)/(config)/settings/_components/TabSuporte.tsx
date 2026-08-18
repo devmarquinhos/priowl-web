@@ -1,7 +1,53 @@
+"use client";
+
+import Link from "next/link";
+import { useState } from "react";
 import { Button } from "@/components/ui/Button";
-import { Send, Mail, MessageSquare, ChevronRight, Users, Shield, Clock, ThumbsUp } from "lucide-react";
+import { Send, Mail, MessageSquare, ChevronRight, Users, Shield, Clock, ThumbsUp, Loader2, CheckCircle2 } from "lucide-react";
 
 export function TabSuporte() {
+  const [subject, setSubject] = useState("Dúvida Geral");
+  const [message, setMessage] = useState("");
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+
+  // Correção S1874: tipagem explícita com HTMLFormElement
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    
+    if (!message.trim()) return;
+    
+    setStatus("loading");
+
+    try {
+      const response = await fetch("/api/send-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ subject, message }),
+      });
+
+      if (response.ok) {
+        setStatus("success");
+        setMessage("");
+        
+        setTimeout(() => setStatus("idle"), 3000);
+      } else {
+        setStatus("error");
+      }
+    } catch (error) {
+      console.error("Erro ao enviar email:", error);
+      setStatus("error");
+    }
+  };
+
+  // Correção S3358: helper function para evitar ternários aninhados no JSX
+  const getButtonLabel = () => {
+    if (status === "loading") return "Enviando...";
+    if (status === "success") return "Enviado!";
+    return "Enviar Dúvida";
+  };
+
   return (
     <div className="space-y-8 animate-in fade-in duration-300">
       <div className="grid gap-8 md:grid-cols-3">
@@ -11,29 +57,51 @@ export function TabSuporte() {
           <h2 className="text-2xl font-bold text-foreground">Central de Ajuda</h2>
           <p className="mb-8 text-sm text-muted">Nossa equipe de especialistas está pronta para ajudar você com qualquer dúvida ou problema técnico.</p>
           
-          <form className="space-y-6">
+          <form onSubmit={handleSubmit} className="space-y-6">
             <div>
-              <label className="mb-2 block text-sm font-medium text-foreground">Assunto</label>
-              <select className="w-full rounded-md border border-border bg-background px-4 py-3 text-sm text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors">
-                <option>Dúvida Geral</option>
-                <option>Problema Financeiro</option>
-                <option>Suporte Técnico</option>
+              <label htmlFor="subject" className="mb-2 block text-sm font-medium text-foreground">Assunto</label>
+              <select 
+                id="subject"
+                value={subject}
+                onChange={(e) => setSubject(e.target.value)}
+                className="w-full rounded-md border border-border bg-background px-4 py-3 text-sm text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
+              >
+                <option value="Dúvida Geral">Dúvida Geral</option>
+                <option value="Problema Financeiro">Problema Financeiro</option>
+                <option value="Suporte Técnico">Suporte Técnico</option>
               </select>
             </div>
             <div>
-              <label className="mb-2 block text-sm font-medium text-foreground">Sua Mensagem</label>
+              <label htmlFor="message" className="mb-2 block text-sm font-medium text-foreground">Sua Mensagem</label>
               <textarea 
+                id="message"
+                value={message}
+                onChange={(e) => setMessage(e.target.value)}
                 rows={5}
+                required
                 placeholder="Descreva sua dúvida com o máximo de detalhes possível..."
                 className="w-full resize-none rounded-md border border-border bg-background px-4 py-3 text-sm text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
-              ></textarea>
+              />
             </div>
+            
             <div className="flex items-center gap-4">
-              <Button className="flex items-center gap-2 bg-primary px-8 py-6 text-base font-medium text-white hover:bg-primary-hover">
-                Enviar Dúvida <Send size={18} />
+              <Button 
+                type="submit" 
+                disabled={status === "loading" || status === "success"}
+                className="flex items-center gap-2 bg-primary px-8 py-6 text-base font-medium text-white hover:bg-primary-hover disabled:opacity-70"
+              >
+                {status === "loading" && <Loader2 size={18} className="animate-spin" />}
+                {status === "success" && <CheckCircle2 size={18} />}
+                <span>{getButtonLabel()}</span>
+                {(status === "idle" || status === "error") && <Send size={18} />}
               </Button>
+              
               <p className="text-xs text-muted">Tempo médio de resposta: 2 horas<br/>úteis.</p>
             </div>
+            
+            {status === "error" && (
+              <p className="text-sm text-red-500 mt-2">Ocorreu um erro ao enviar sua mensagem. Tente novamente.</p>
+            )}
           </form>
         </div>
 
@@ -64,15 +132,15 @@ export function TabSuporte() {
           <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
             <h3 className="mb-4 font-bold text-foreground">Artigos Populares</h3>
             <div className="space-y-3">
-              <a href="#" className="flex items-center justify-between border-b border-border pb-3 text-sm text-muted hover:text-primary transition-colors">
+              <Link href="/suporte/faq/cobrancas" className="flex items-center justify-between border-b border-border pb-3 text-sm text-muted hover:text-primary transition-colors">
                 Como gerenciar cobranças? <ChevronRight size={16} />
-              </a>
-              <a href="#" className="flex items-center justify-between border-b border-border pb-3 text-sm text-muted hover:text-primary transition-colors">
+              </Link>
+              <Link href="/suporte/faq/notificacoes" className="flex items-center justify-between border-b border-border pb-3 text-sm text-muted hover:text-primary transition-colors">
                 Configurando notificações mobile <ChevronRight size={16} />
-              </a>
-              <a href="#" className="flex items-center justify-between text-sm text-muted hover:text-primary transition-colors">
+              </Link>
+              <Link href="/suporte/faq/calendarios" className="flex items-center justify-between text-sm text-muted hover:text-primary transition-colors">
                 Integração com calendários <ChevronRight size={16} />
-              </a>
+              </Link>
             </div>
           </div>
 
@@ -107,7 +175,7 @@ export function TabSuporte() {
       </div>
 
       <div className="pt-8 text-center">
-        <p className="text-xs text-muted/60">© 2024 Priowl Task Management. Todos os direitos reservados.</p>
+        <p className="text-xs text-muted/60">© 2026 Priowl Task Management. Todos os direitos reservados.</p>
       </div>
     </div>
   );

@@ -2,8 +2,9 @@
 
 import { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { Lock, ShieldCheck, Eye, EyeOff, ArrowLeft, History, CheckCircle2, Shield } from "lucide-react";
+import { ShieldCheck, Eye, EyeOff, CheckCircle2, Shield, KeyRound, AlertCircle } from "lucide-react";
 import Link from "next/link";
+import { redefinirSenhaEsquecidaAction } from "@/actions/auth-actions"; 
 
 function RedefinirSenhaForm() {
   const searchParams = useSearchParams();
@@ -13,51 +14,45 @@ function RedefinirSenhaForm() {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const hasMinLength = password.length >= 8;
   const hasMixedCase = /[a-z]/.test(password) && /[A-Z]/.test(password);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setErrorMessage("");
     
     if (!token) {
-      alert("Token de redefinição inválido ou ausente.");
+      setErrorMessage("Token de redefinição ausente. Use o link enviado por e-mail.");
       return;
     }
 
     if (password !== confirmPassword) {
-      alert("As senhas não coincidem.");
+      setErrorMessage("As senhas não coincidem.");
       return;
     }
 
     if (!hasMinLength || !hasMixedCase) {
-      alert("A senha não atende aos requisitos de segurança.");
+      setErrorMessage("A senha não atende aos requisitos de segurança.");
       return;
     }
 
     setIsLoading(true);
 
-    try {
-      // Substitua pela chamada real ao seu backend
-      const response = await fetch("http://localhost:8080/api/auth/password/reset", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ token, newPassword: password }),
-      });
+    // 🔹 Chamada para a Server Action
+    const result = await redefinirSenhaEsquecidaAction(token, password.trim());
 
-      if (response.ok) {
-        setIsSuccess(true);
-      } else {
-        alert("Erro ao redefinir a senha. O link pode ter expirado.");
-      }
-    } catch (error) {
-      console.error(error);
-      alert("Erro de conexão com o servidor.");
-    } finally {
-      setIsLoading(false);
+    if (result.error) {
+      setErrorMessage(result.error);
+    } else if (result.success) {
+      setIsSuccess(true);
     }
+
+    setIsLoading(false);
   };
 
   if (isSuccess) {
@@ -77,12 +72,19 @@ function RedefinirSenhaForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
+      {errorMessage && (
+        <div className="flex items-center gap-2 rounded-md bg-red-50 p-3 text-sm text-red-600">
+          <AlertCircle size={16} className="shrink-0" />
+          <p>{errorMessage}</p>
+        </div>
+      )}
+
       {/* Nova Senha */}
       <div>
-        <label className="mb-2 block text-xs font-bold text-gray-600">Nova Senha</label>
+        <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-gray-600">Nova Senha</label>
         <div className="relative">
           <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-            <Lock className="h-5 w-5 text-gray-400" />
+            <KeyRound className="h-5 w-5 text-gray-400" />
           </div>
           <input
             type={showPassword ? "text" : "password"}
@@ -104,7 +106,7 @@ function RedefinirSenhaForm() {
 
       {/* Confirmar Nova Senha */}
       <div>
-        <label className="mb-2 block text-xs font-bold text-gray-600">Confirmar Nova Senha</label>
+        <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-gray-600">Confirmar Nova Senha</label>
         <div className="relative">
           <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
             <ShieldCheck className="h-5 w-5 text-gray-400" />
@@ -145,14 +147,8 @@ function RedefinirSenhaForm() {
         disabled={isLoading || !token}
         className="w-full rounded-md bg-[#D6A628] py-3 text-sm font-bold text-white transition-colors hover:bg-[#B98C03] disabled:opacity-70 disabled:cursor-not-allowed mt-2"
       >
-        {isLoading ? "Salvando..." : "Alterar Senha"}
+        {isLoading ? "Salvando..." : "Redefinir Senha"}
       </button>
-
-      <div className="mt-6 text-center">
-        <Link href="/auth?mode=login" className="inline-flex items-center gap-2 text-sm font-bold text-gray-600 hover:text-gray-900 transition-colors">
-          <ArrowLeft size={16} /> Voltar
-        </Link>
-      </div>
     </form>
   );
 }
@@ -165,21 +161,22 @@ export default function RedefinirSenhaPage() {
         {/* Ícone e Cabeçalho */}
         <div className="mb-6 flex flex-col items-center text-center">
           <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#D6A628]">
-            <History className="text-white" size={32} />
+            <KeyRound className="text-white" size={32} />
           </div>
-          <h1 className="mb-2 text-2xl font-bold text-gray-900">Redefinir sua senha</h1>
+          <h1 className="mb-2 text-2xl font-bold text-gray-900">Criar nova senha</h1>
           <p className="text-sm text-gray-500">
             Escolha uma senha forte para proteger sua conta.
           </p>
         </div>
 
-        <Suspense fallback={<div className="text-center py-4 text-gray-500">Carregando formulário...</div>}>
+        {/* Suspense é necessário no Next.js App Router ao usar useSearchParams */}
+        <Suspense fallback={<div className="text-center py-4 text-gray-500">Carregando...</div>}>
           <RedefinirSenhaForm />
         </Suspense>
 
       </div>
       
-      {/* Footer de Segurança (conforme imagem) */}
+      {/* Footer de Segurança */}
       <div className="mt-8 flex items-center gap-2 text-sm text-gray-400">
         <Shield size={16} className="text-gray-300" />
         <span>Protegido por Priowl Security</span>

@@ -24,7 +24,6 @@ export async function getMinhaAssinaturaAction(): Promise<SubscriptionResponse |
       next: { tags: ["user-subscription"] },
     });
 
-
     if (!res.ok) {
       console.error(`Erro ao buscar assinatura: Status ${res.status}`);
       return null;
@@ -66,6 +65,8 @@ export async function atualizarPerfilAction(formData: FormData) {
   const token = cookieStore.get("priowl_token")?.value;
 
   try {
+    // Verifique se a rota do seu backend possui o prefixo /api. 
+    // Ex: ${BACKEND_URL}/api/users/me (Se for o caso, altere aqui)
     const res = await fetch(`${BACKEND_URL}/users/me`, {
       method: "PUT",
       headers: {
@@ -76,15 +77,80 @@ export async function atualizarPerfilAction(formData: FormData) {
     });
 
     if (!res.ok) {
-      throw new Error("Falha ao atualizar dados");
+      const errorData = await res.json().catch(() => null);
+      return { error: errorData?.message || "Falha ao atualizar dados." };
     }
 
     // @ts-expect-error - Bug de tipagem interno do Next.js
     revalidateTag("user-profile");
     
+    // Retorno de sucesso para o formulário
+    return { success: "Perfil atualizado com sucesso!" };
+    
   } catch (error) {
     console.error("Erro na Server Action:", error);
+    return { error: "Erro de conexão com o servidor." };
   }
+}
+
+export async function alterarSenhaAction(currentPassword: string, newPassword: string) {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("priowl_token")?.value;
+
+  if (!token) {
+    return { error: "Sessão expirada. Faça login novamente." };
+  }
+
+  try {
+    // Adicionado /api/users/me/password baseado no seu Controller Spring
+    const res = await fetch(`${BACKEND_URL}/users/me/password`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+      },
+      body: JSON.stringify({ 
+        currentPassword: currentPassword.trim(), 
+        newPassword: newPassword.trim() 
+      }),
+    });
+
+    if (!res.ok) {
+      const errorMsg = await res.text().catch(() => null);
+      return { error: errorMsg || "A senha atual está incorreta ou ocorreu um erro." };
+    }
+
+    return { success: true };
+  } catch (error) {
+    console.error("Erro na Server Action ao alterar senha:", error);
+    return { error: "Erro de conexão com o servidor." };
+  }
+}
+
+export async function excluirContaAction() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("priowl_token")?.value;
+
+  try {
+    const res = await fetch(`${BACKEND_URL}/users/me`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    if (!res.ok) {
+      return { error: "Falha ao excluir conta." };
+    }
+
+    cookieStore.delete("priowl_token");
+  } catch (error) {
+    console.error("Erro ao excluir conta:", error);
+    return { error: "Não foi possível excluir a conta." };
+  }
+
+  // O redirect deve ser chamado fora do bloco try/catch no Next.js
+  redirect("/auth?mode=login");
 }
 
 export async function logoutAction() {

@@ -1,43 +1,35 @@
 "use client";
 
 import { useState } from "react";
-import { Mail, ArrowLeft, Send, History } from "lucide-react";
+import { Mail, ArrowLeft, Send, History, AlertCircle } from "lucide-react";
 import Link from "next/link";
+import { solicitarRecuperacaoSenhaAction } from "@/actions/auth-actions"; 
 
 export default function EsqueciMinhaSenhaPage() {
   const [email, setEmail] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setErrorMessage("");
 
-    try {
-      // Substitua pela chamada real ao seu backend
-      const response = await fetch("http://localhost:8080/api/auth/password/forgot", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email }),
-      });
+    const result = await solicitarRecuperacaoSenhaAction(email);
 
-      if (response.ok) {
-        setIsSuccess(true);
-      } else {
-        alert("Erro ao solicitar link. Verifique o e-mail digitado.");
-      }
-    } catch (error) {
-      console.error(error);
-      alert("Erro de conexão com o servidor.");
-    } finally {
-      setIsLoading(false);
+    if (result.error) {
+      setErrorMessage(result.error);
+    } else if (result.success) {
+      setIsSuccess(true);
     }
+
+    setIsLoading(false);
   };
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 p-4">
       <div className="w-full max-w-md rounded-2xl bg-white p-8 shadow-xl">
-        
         {/* Ícone e Cabeçalho */}
         <div className="mb-6 flex flex-col items-center text-center">
           <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#FDE6A6]">
@@ -56,6 +48,15 @@ export default function EsqueciMinhaSenhaPage() {
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="space-y-6">
+            
+            {/* 🔹 Exibição de Erro Customizada */}
+            {errorMessage && (
+              <div className="flex items-center gap-2 rounded-md bg-red-50 p-3 text-sm text-red-600">
+                <AlertCircle size={16} className="shrink-0" />
+                <p>{errorMessage}</p>
+              </div>
+            )}
+
             <div>
               <label className="mb-2 block text-xs font-bold uppercase tracking-wide text-gray-600">
                 E-mail
@@ -77,8 +78,8 @@ export default function EsqueciMinhaSenhaPage() {
 
             <button
               type="submit"
-              disabled={isLoading}
-              className="flex w-full items-center justify-center gap-2 rounded-md bg-[#D6A628] py-3 text-sm font-bold text-white transition-colors hover:bg-[#B98C03] disabled:opacity-70"
+              disabled={isLoading || !email}
+              className="flex w-full items-center justify-center gap-2 rounded-md bg-[#D6A628] py-3 text-sm font-bold text-white transition-colors hover:bg-[#B98C03] disabled:opacity-70 disabled:cursor-not-allowed"
             >
               {isLoading ? "Enviando..." : "Enviar Link de Recuperação"}
               {!isLoading && <Send size={16} />}

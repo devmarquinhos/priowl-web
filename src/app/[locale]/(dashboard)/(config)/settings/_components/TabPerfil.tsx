@@ -1,10 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation"; // 🔹 Importado o router do Next.js
 import { Button } from "@/components/ui/Button";
 import { Avatar } from "@/components/ui/Avatar";
-import { atualizarPerfilAction, logoutAction } from "@/actions/user-actions";
-import { ShieldCheck, RefreshCw, Mail, CheckCircle2, AlertCircle, LogOut } from "lucide-react";
+import { atualizarPerfilAction, excluirContaAction, logoutAction } from "@/actions/user-actions";
+import { ShieldCheck, RefreshCw, LogOut, KeyRound } from "lucide-react"; // 🔹 Adicionado ícone de chave
 import { UserProfileResponse } from "@/types/user";
 
 interface TabPerfilProps {
@@ -13,53 +14,42 @@ interface TabPerfilProps {
 }
 
 export function TabPerfil({ user, fallback }: Readonly<TabPerfilProps>) {
-  const [isSendingToken, setIsSendingToken] = useState(false);
-  const [isLoggingOut, setIsLoggingOut] = useState(false); // Estado para o botão de sair
-  const [feedbackMsg, setFeedbackMsg] = useState("");
-  const [feedbackType, setFeedbackType] = useState<"success" | "error" | null>(null);
+  const router = useRouter(); // 🔹 Inicializado o router
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+  
+  // Estados de feedback de atualização
+  const [updateFeedback, setUpdateFeedback] = useState<{ type: "success" | "error", msg: string } | null>(null);
 
-  const handleSolicitarAlteracaoSenha = async () => {
-    if (!user?.email) return;
+  // useTransition para o formulário de atualizar sem travar a tela
+  const [isPendingUpdate, startUpdate] = useTransition();
 
-    setIsSendingToken(true);
-    setFeedbackMsg("");
-    setFeedbackType(null);
-
-    try {
-      const response = await fetch("http://localhost:8080/api/auth/password/forgot", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: user.email, 
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Não foi possível enviar o link de redefinição.");
+  // Função para lidar com o envio do formulário de atualização (PUT /me)
+  const handleUpdateProfile = (formData: FormData) => {
+    setUpdateFeedback(null);
+    startUpdate(async () => {
+      const result = await atualizarPerfilAction(formData);
+      if (result?.error) {
+        setUpdateFeedback({ type: "error", msg: result.error });
+      } else if (result?.success) {
+        setUpdateFeedback({ type: "success", msg: result.success });
       }
+    });
+  };
 
-      setFeedbackType("success");
-      setFeedbackMsg("Link seguro enviado! Verifique sua caixa de entrada para alterar a senha.");
-      
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
-      setFeedbackType("error");
-      setFeedbackMsg(error.message || "Ocorreu um erro no servidor.");
-    } finally {
-      setIsSendingToken(false);
-    }
+  // Função para lidar com a exclusão da conta (DELETE /me)
+  const handleDeleteAccount = async () => {
+    const confirmed = window.confirm("TEM CERTEZA? Esta ação é irreversível e todos os seus dados serão apagados.");
+    if (!confirmed) return;
+
+    setIsDeleting(true);
+    await excluirContaAction();
+    setIsDeleting(false); // Só roda se falhar, pois o sucesso faz redirect
   };
 
   const handleLogout = async () => {
     setIsLoggingOut(true);
-    try {
-      await logoutAction();
-    } catch (error) {
-      console.error("Erro ao fazer logout:", error);
-      setIsLoggingOut(false);
-    }
+    await logoutAction();
   };
 
   return (
@@ -116,30 +106,45 @@ export function TabPerfil({ user, fallback }: Readonly<TabPerfilProps>) {
       {/* Grid de Formulários */}
       <div className="grid gap-6 md:grid-cols-2">
         
-        {/* Dados Pessoais */}
+        {/* Dados Pessoais (Agora Funcional) */}
         <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
           <h3 className="mb-6 text-lg font-bold text-foreground">Dados Pessoais</h3>
-          <form action={atualizarPerfilAction} className="space-y-4">
+          
+          <form action={handleUpdateProfile} className="space-y-4">
             <div>
               <label className="mb-1.5 block text-sm font-medium text-foreground">Nome de Usuário</label>
               <input 
                 type="text" 
                 name="username"
                 defaultValue={user?.username || ""} 
+                required
                 className="w-full rounded-md border border-border bg-background px-4 py-2.5 text-sm text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
               />
             </div>
             <div>
-              <label className="mb-1.5 block text-sm font-medium text-foreground">E-mail Profissional</label>
+              <label className="mb-1.5 block text-sm font-medium text-foreground">E-mail</label>
               <input 
                 type="email" 
                 name="email"
                 defaultValue={user?.email || ""} 
+                required
                 className="w-full rounded-md border border-border bg-background px-4 py-2.5 text-sm text-foreground outline-none focus:border-primary focus:ring-1 focus:ring-primary transition-colors"
               />
             </div>
-            <Button type="submit" className="mt-4 w-full bg-primary py-6 text-base font-medium text-white hover:bg-primary-hover">
-              Salvar Alterações
+
+            {/* Mensagem de Feedback do Form */}
+            {updateFeedback && (
+              <p className={`text-sm mt-2 ${updateFeedback.type === "success" ? "text-green-500" : "text-error"}`}>
+                {updateFeedback.msg}
+              </p>
+            )}
+
+            <Button 
+              type="submit" 
+              disabled={isPendingUpdate}
+              className="mt-4 w-full bg-primary py-6 text-base font-medium text-white hover:bg-primary-hover disabled:opacity-70"
+            >
+              {isPendingUpdate ? "Salvando..." : "Salvar Alterações"}
             </Button>
           </form>
         </div>
@@ -159,46 +164,18 @@ export function TabPerfil({ user, fallback }: Readonly<TabPerfilProps>) {
           <div className="mt-auto border-t border-border pt-6">
             <h4 className="mb-1 font-bold text-foreground">Alterar Palavra-passe</h4>
             <p className="mb-4 text-sm text-muted">
-              Para garantir a segurança máxima, as alterações de senha são validadas externamente.
+              Você será redirecionado para uma tela segura onde poderá definir sua nova senha.
             </p>
             
+            {/* 🔹 Botão refatorado para redirecionamento */}
             <Button 
-              onClick={handleSolicitarAlteracaoSenha}
-              disabled={isSendingToken || feedbackType === "success" || !user?.email}
+              onClick={() => router.push("/change-password")} 
               className="flex w-full items-center justify-center gap-2 bg-foreground py-6 text-base font-medium text-background hover:opacity-90 transition-opacity"
             >
-              {isSendingToken ? (
-                <>
-                  <RefreshCw size={18} className="animate-spin" />
-                  Processando...
-                </>
-              ) : (
-                <>
-                  <Mail size={18} />
-                  Enviar link seguro
-                </>
-              )}
+              <KeyRound size={18} />
+              Alterar minha senha
             </Button>
 
-            {feedbackType === "success" && (
-              <div className="mt-4 flex items-start gap-3 rounded-lg border border-green-500/20 bg-green-500/10 p-4 text-green-600">
-                <CheckCircle2 className="mt-0.5 shrink-0 text-green-600" size={18} />
-                <div>
-                  <p className="text-sm font-bold">E-mail enviado!</p>
-                  <p className="mt-1 text-xs opacity-90">{feedbackMsg}</p>
-                </div>
-              </div>
-            )}
-
-            {feedbackType === "error" && (
-              <div className="mt-4 flex items-start gap-3 rounded-lg border border-error/20 bg-error/10 p-4 text-error">
-                <AlertCircle className="mt-0.5 shrink-0 text-error" size={18} />
-                <div>
-                  <p className="text-sm font-bold">Falha ao enviar</p>
-                  <p className="mt-1 text-xs opacity-90">{feedbackMsg}</p>
-                </div>
-              </div>
-            )}
           </div>
         </div>
       </div>
@@ -211,8 +188,13 @@ export function TabPerfil({ user, fallback }: Readonly<TabPerfilProps>) {
             A exclusão da conta é permanente e removerá todos os seus dados e projetos.
           </p>
         </div>
-        <Button variant="outline" className="shrink-0 border-error/40 px-6 text-error hover:bg-error/10">
-          Excluir Conta
+        <Button 
+          variant="outline" 
+          onClick={handleDeleteAccount}
+          disabled={isDeleting}
+          className="shrink-0 border-error/40 px-6 text-error hover:bg-error/10 hover:text-error"
+        >
+          {isDeleting ? "Excluindo..." : "Excluir Conta"}
         </Button>
       </div>
 
