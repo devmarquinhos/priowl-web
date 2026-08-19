@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { createPortal } from "react-dom"; // 🔹 Importação do Portal
 import { 
   X, Calendar, Edit2, CheckCircle, RefreshCw, 
-  Check, Clock, Lock, ChevronRight, Shield, Trash2, Loader2
+  Check, Clock, Lock, Shield, Trash2, Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
-import { updateTaskAction, deleteTaskAction } from "@/actions/task-actions"; // <-- Importando as Server Actions
+import { updateTaskAction, deleteTaskAction } from "@/actions/task-actions"; 
 import type { TaskResponse, SubTaskResponse } from "@/actions/task-actions";
 import type { CategoryResponse } from "@/actions/category-actions";
 
@@ -27,13 +28,26 @@ export function TaskDetailsModal({
   allTasks = [], 
   categories = [] 
 }: TaskDetailsModalProps) {
-  // Estados de loading para os botões
+  // 🔹 Estado para garantir que o Portal só renderize no lado do cliente (Navegador)
+  const [mounted, setMounted] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
 
-  if (!isOpen || !task) return null;
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setMounted(true);
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    
+    return () => { document.body.style.overflow = "unset"; };
+  }, [isOpen]);
 
-  // ... (mesmas lógicas de status e variáveis que você já tem) ...
+  if (!isOpen || !task || !mounted) return null;
+
+  // Configurações visuais
   const statusConfig = {
     PENDING: { label: "Pendente", className: "bg-muted text-muted-foreground border-border", Icon: Clock },
     IN_PROGRESS: { label: "Em Progresso", className: "bg-yellow-500/10 text-yellow-600 border-yellow-500/20", Icon: RefreshCw },
@@ -41,7 +55,6 @@ export function TaskDetailsModal({
     CANCELLED: { label: "Cancelada", className: "bg-red-500/10 text-red-600 border-red-500/20", Icon: X },
   };
   const currentStatus = statusConfig[task.status as keyof typeof statusConfig] || statusConfig.PENDING;
-  const StatusIcon = currentStatus.Icon;
   
   const importanceConfig = {
     5: { label: "Crítica", className: "bg-red-500/10 text-red-600 border-red-500/20" },
@@ -62,15 +75,13 @@ export function TaskDetailsModal({
   const parentTask = allTasks.find(t => t.id === task.parentTaskId);
   const parentTaskName = parentTask ? parentTask.title : `Tarefa #${task.parentTaskId}`;
   
-  // VERIFICAÇÃO DE BLOQUEIO: Se a tarefa pai existe e o status dela NÃO é COMPLETED
   const isBlockedByDependency = !!task.parentTaskId && parentTask?.status !== "COMPLETED";
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const category = categories.find(c => c.id === task.categoryId) as any;
+  const category = categories.find(c => c.id === task.categoryId);
   const categoryName = category ? category.title : "Sem categoria";
 
   /* =========================================================
-     FUNÇÕES DE AÇÃO (CONCLUIR E DELETAR)
+     FUNÇÕES DE AÇÃO
      ========================================================= */
   const handleComplete = async () => {
     if (isBlockedByDependency) {
@@ -83,7 +94,7 @@ export function TaskDetailsModal({
     setIsCompleting(false);
 
     if (result.success) {
-      onClose(); // Fecha o modal após o sucesso
+      onClose();
     } else {
       alert(result.error || "Erro ao concluir a tarefa.");
     }
@@ -103,21 +114,25 @@ export function TaskDetailsModal({
     }
   };
 
-  return (
+  // 🔹 Criando o Portal para jogar o Modal direto na tag <body>
+  return createPortal(
     <>
-      <div className="fixed inset-0 z-40 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200" onClick={onClose} />
+      {/* 🔹 Z-index aumentado para 9999 para garantir sobreposição absoluta */}
+      <div 
+        className="fixed inset-0 z-[9998] bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" 
+        onClick={onClose} 
+      />
 
-      <div className="fixed right-0 top-0 h-full w-full max-w-md bg-card shadow-2xl z-50 flex flex-col animate-in slide-in-from-right duration-300">
+      <div className="fixed right-0 top-0 h-[100dvh] w-full max-w-md bg-card shadow-2xl z-[9999] flex flex-col animate-in slide-in-from-right duration-300 border-l border-border/50">
         
         {/* HEADER */}
-        <div className="p-6 pb-4 border-b border-border/50 bg-card/50">
+        <div className="p-6 pb-4 border-b border-border/50 bg-muted/10 shrink-0">
           <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium">
-              <Shield size={12} className="text-muted-foreground/70" />
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground font-medium bg-card px-2 py-1 rounded-md border border-border/50 shadow-sm">
+              <Shield size={12} className="text-primary" />
               <span>{categoryName}</span>
             </div>
             
-            {/* NOVO: Botão de deletar na parte superior */}
             <button 
               onClick={handleDelete} 
               disabled={isDeleting}
@@ -129,22 +144,32 @@ export function TaskDetailsModal({
           </div>
 
           <div className="flex items-start justify-between mb-4">
-            <h2 className="text-2xl font-bold text-foreground leading-tight pr-4">
+            <h2 className="text-xl md:text-2xl font-bold text-foreground leading-tight pr-4">
               {task.title}
             </h2>
-            <button onClick={onClose} className="text-muted-foreground hover:text-foreground shrink-0 mt-1 transition-colors bg-muted/50 p-1.5 rounded-md">
+            <button onClick={onClose} className="text-muted-foreground hover:text-foreground shrink-0 mt-1 transition-colors bg-card hover:bg-muted p-1.5 border border-border/50 rounded-md">
               <X size={20} />
             </button>
           </div>
 
-          {/* Chips de Informação... */}
+          {/* Chips de Informação */}
+          <div className="flex flex-wrap items-center gap-2">
+            <div className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold rounded-full border ${currentStatus.className}`}>
+              <currentStatus.Icon size={12} /> {currentStatus.label}
+            </div>
+            <div className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold rounded-full border ${currentImportance.className}`}>
+              {currentImportance.label}
+            </div>
+            <div className="flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold rounded-full border border-border bg-card text-muted-foreground">
+              <Calendar size={12} /> {formattedDate}
+            </div>
+          </div>
         </div>
 
         {/* CORPO */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-8 bg-background/50">
-          {/* Mudei de `hasDependencyBlock` para `isBlockedByDependency` para só mostrar o aviso se a tarefa pai AINDA NÃO ESTIVER CONCLUÍDA */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-8 bg-background">
           {isBlockedByDependency && (
-            <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 flex gap-3 text-amber-700 dark:text-amber-500">
+            <div className="bg-amber-500/10 border border-amber-500/20 rounded-xl p-4 flex gap-3 text-amber-700 dark:text-amber-500 shadow-sm">
               <Lock size={18} className="shrink-0 mt-0.5" />
               <div>
                 <h4 className="text-[10px] font-bold uppercase tracking-wider opacity-80 mb-1">
@@ -159,16 +184,16 @@ export function TaskDetailsModal({
           )}
 
           <section>
-            <h3 className="text-[11px] font-bold text-muted-foreground tracking-wider uppercase mb-3">
+            <h3 className="text-[11px] font-bold text-muted-foreground tracking-wider uppercase mb-3 flex items-center gap-2">
               Descrição Detalhada
             </h3>
-            <p className="text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap bg-card p-4 rounded-xl border border-border/50">
+            <p className="text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap bg-card p-4 rounded-xl border border-border/50 shadow-sm">
               {task.description || "Sem descrição detalhada cadastrada para esta tarefa."}
             </p>
           </section>
 
-          {/* Progresso e Checklist Integrados (Correção variáveis não usadas) */}
-          <section className="bg-card p-4 rounded-xl border border-border/50">
+          {/* Progresso e Checklist */}
+          <section className="bg-card p-4 rounded-xl border border-border/50 shadow-sm">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-[11px] font-bold text-muted-foreground tracking-wider uppercase">
                 {subtasks.length > 0 
@@ -208,7 +233,7 @@ export function TaskDetailsModal({
         </div>
 
         {/* FOOTER */}
-        <div className="p-6 border-t border-border bg-card/50">
+        <div className="p-6 border-t border-border bg-muted/10 shrink-0">
           <div className="flex gap-3">
             <Button 
               variant="outline" 
@@ -221,10 +246,8 @@ export function TaskDetailsModal({
               <Edit2 size={16} className="mr-2" /> Editar
             </Button>
 
-            {/* Atualização no Botão de Concluir */}
             <Button 
-              variant="primary" 
-              className={`flex-1 font-bold h-12 rounded-xl shadow-lg shadow-primary/20 ${isBlockedByDependency ? 'opacity-50 cursor-not-allowed grayscale' : ''}`}
+              className={`flex-1 font-bold h-12 rounded-xl shadow-lg shadow-primary/20 ${isBlockedByDependency ? 'opacity-50 cursor-not-allowed grayscale' : 'bg-primary text-primary-foreground hover:bg-primary/90'}`}
               onClick={handleComplete}
               disabled={isCompleting || isBlockedByDependency || task.status === "COMPLETED"}
             >
@@ -239,6 +262,7 @@ export function TaskDetailsModal({
         </div>
 
       </div>
-    </>
+    </>,
+    document.body
   );
 }

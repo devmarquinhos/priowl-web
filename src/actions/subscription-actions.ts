@@ -5,6 +5,24 @@ import { revalidateTag } from "next/cache";
 
 const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8080/api";
 
+// 1. TIPAGENS EXPORTADAS PARA USO NO FRONTEND
+export interface PlanData {
+  id: number;
+  name: string;
+  price: number;
+  description: string;
+  maxTasks: number;
+}
+
+export interface UserSubscription {
+  id: number | null;
+  planName: string;
+  status: string;
+  startDate: string | null;
+  endDate: string | null;
+  maxTasks: number;
+}
+
 async function getToken() {
   const cookieStore = await cookies();
   return cookieStore.get("priowl_token")?.value;
@@ -18,7 +36,7 @@ async function getToken() {
  * Busca a assinatura atual do usuário logado
  * GET /api/subscriptions/me
  */
-export async function getMinhaAssinaturaAction() {
+export async function getMinhaAssinaturaAction(): Promise<UserSubscription | null> {
   const token = await getToken();
   if (!token) return null;
 
@@ -28,7 +46,7 @@ export async function getMinhaAssinaturaAction() {
       headers: {
         Authorization: `Bearer ${token}`,
       },
-      next: { tags: ["user-subscription"] }, // Cache inteligente para revalidação rápida
+      next: { tags: ["user-subscription"] }, 
     });
 
     if (!res.ok) return null;
@@ -43,16 +61,18 @@ export async function getMinhaAssinaturaAction() {
  * Busca todos os planos ativos cadastrados no sistema
  * GET /api/plans
  */
-export async function getPlanosAction() {
-  const token = await getToken();
-  if (!token) return [];
+export async function getPlanosAction(): Promise<PlanData[]> {
+  // Alterado: não exigimos token para ver os planos na Landing Page
+  const token = await getToken(); 
+  const headers: HeadersInit = {};
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
 
   try {
     const res = await fetch(`${BACKEND_URL}/plans`, {
       method: "GET",
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
+      headers,
     });
 
     if (!res.ok) return [];
@@ -92,10 +112,6 @@ export async function getMeusPagamentosAction() {
    2. MUTATIONS (AÇÕES DO USUÁRIO)
    ========================================================================== */
 
-/**
- * Inicia o checkout de um novo plano
- * POST /api/subscriptions/checkout
- */
 export async function checkoutPlanoAction(planId: number) {
   const token = await getToken();
   if (!token) return { error: "Não autorizado" };
@@ -123,22 +139,21 @@ export async function checkoutPlanoAction(planId: number) {
   }
 }
 
-/**
- * Altera o plano de uma assinatura existente (Upgrade/Downgrade)
- * PUT /api/subscriptions/me/plan
- */
 export async function alterarPlanoAction(planId: number) {
   const token = await getToken();
   if (!token) return { error: "Não autorizado" };
 
   try {
     const res = await fetch(`${BACKEND_URL}/subscriptions/me/plan`, {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
+      method: 'PUT',
+      headers: { 
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}` // 🔹 CORREÇÃO: O token precisa ser enviado aqui!
       },
-      body: JSON.stringify({ planId }),
+      body: JSON.stringify({
+        planId: planId,
+        status: "ACTIVE" 
+      })
     });
 
     if (!res.ok) {
@@ -155,10 +170,6 @@ export async function alterarPlanoAction(planId: number) {
   }
 }
 
-/**
- * Cancela a assinatura atual
- * POST /api/subscriptions/me/cancel
- */
 export async function cancelarAssinaturaAction() {
   const token = await getToken();
   if (!token) return { error: "Não autorizado" };

@@ -1,32 +1,31 @@
-import { Download, Receipt, RotateCcw, ChevronLeft, ChevronRight, FileX2 } from "lucide-react";
-import { getMeusPagamentosAction } from "@/actions/subscription-actions";
+"use client"; // 🔹 Necessário para usar eventos de clique (onClick) no Next.js
 
-// 🔹 1. Tipagem esperada do backend
+import { Download, Receipt, RotateCcw, ChevronLeft, ChevronRight, FileX2, Info } from "lucide-react";
+
+// Tipagem esperada
 interface PaymentItem {
   id: string | number;
-  paymentDate: string; // Ex: "2023-12-01T10:00:00Z"
-  amount: number;      // Ex: 29.90
-  status: string;      // Ex: "PAID" | "FAILED" | "PENDING"
+  paymentDate: string;
+  amount: number;
+  status: string;
 }
 
-export async function BillingHistoryTable() {
-  // 🔹 2. Busca dinâmica das faturas no backend
-  const faturas: PaymentItem[] = await getMeusPagamentosAction();
+export function BillingHistoryTable() {
+  // 🔹 Dados Mockados (Ilustrativos) para visualização no projeto acadêmico
+  const faturas: PaymentItem[] = [
+    { id: 4092, paymentDate: "2026-08-01T10:00:00Z", amount: 29.90, status: "PAID" },
+    { id: 3811, paymentDate: "2026-07-01T10:00:00Z", amount: 29.90, status: "PAID" },
+    { id: 3504, paymentDate: "2026-06-01T10:00:00Z", amount: 29.90, status: "FAILED" },
+    { id: 3510, paymentDate: "2026-06-03T10:00:00Z", amount: 29.90, status: "PAID" },
+  ];
 
-  // Formatador de moeda
   const formatarMoeda = (valor: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(valor);
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(valor);
   };
 
-  // Formatador de data (Ex: "01 Dez, 2023")
   const formatarData = (dataIso: string) => {
     if (!dataIso) return "--";
     const data = new Date(dataIso);
-    
-    // 🔹 CORREÇÃO: Usando replaceAll para satisfazer o SonarLint
     return data.toLocaleDateString('pt-BR', {
       day: '2-digit',
       month: 'short',
@@ -34,11 +33,24 @@ export async function BillingHistoryTable() {
     }).replaceAll(' de ', ' ').replaceAll('.', ','); 
   };
 
+  // 🔹 Função para simular ações
+  const handleAcaoIlustrativa = () => {
+    alert("Ambiente Ilustrativo: Nenhuma fatura real foi gerada. Esta é apenas uma demonstração visual.");
+  };
+
   return (
     <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+      
+      {/* 🔹 Aviso Acadêmico */}
+      <div className="bg-blue-50/50 border-b border-blue-100 p-3 px-6 flex items-center gap-2 text-blue-700 text-xs">
+        <Info size={14} />
+        <span><strong>Nota Acadêmica:</strong> Os dados abaixo são mockados (fictícios) para fins de demonstração do layout.</span>
+      </div>
+
       <div className="flex justify-between items-center p-6 border-b border-border">
         <h3 className="text-xl font-bold text-foreground">Histórico de Pagamentos</h3>
         <button 
+          onClick={handleAcaoIlustrativa}
           className="text-primary text-sm font-bold flex items-center gap-2 hover:underline transition-all disabled:opacity-50 disabled:hover:no-underline"
           disabled={faturas.length === 0}
         >
@@ -58,7 +70,6 @@ export async function BillingHistoryTable() {
             </tr>
           </thead>
           <tbody className="divide-y divide-border">
-            {/* 🔹 3. Estado Vazio: Se não houver faturas */}
             {faturas.length === 0 ? (
               <tr>
                 <td colSpan={5} className="px-6 py-12 text-center text-muted-foreground">
@@ -69,7 +80,6 @@ export async function BillingHistoryTable() {
                 </td>
               </tr>
             ) : (
-              /* 🔹 4. Renderização Dinâmica */
               faturas.map((fatura) => {
                 const isPago = fatura.status === "PAID" || fatura.status === "Pago";
 
@@ -92,13 +102,12 @@ export async function BillingHistoryTable() {
                       )}
                     </td>
                     <td className="px-6 py-4 text-[#A17C12]">
-                      {/* 🔹 CORREÇÃO: title envelopado no span ao invés do ícone direto */}
                       {isPago ? (
-                        <span title="Ver Recibo">
+                        <span title="Ver Recibo" onClick={handleAcaoIlustrativa}>
                           <Receipt size={18} className="cursor-pointer hover:opacity-70 transition-opacity" />
                         </span>
                       ) : (
-                        <span title="Tentar Novamente">
+                        <span title="Tentar Novamente" onClick={handleAcaoIlustrativa}>
                           <RotateCcw size={18} className="cursor-pointer hover:opacity-70 transition-opacity" />
                         </span>
                       )}
@@ -111,7 +120,6 @@ export async function BillingHistoryTable() {
         </table>
       </div>
       
-      {/* 🔹 Paginação condicional */}
       {faturas.length > 0 && (
         <div className="p-4 border-t border-border bg-muted/10 flex justify-between items-center text-sm text-muted-foreground">
           <span>Mostrando {faturas.length} faturas</span>

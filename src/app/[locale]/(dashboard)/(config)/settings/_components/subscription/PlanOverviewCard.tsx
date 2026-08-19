@@ -1,6 +1,11 @@
+"use client";
+
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/Button";
-import { CreditCard } from "lucide-react";
+import { CreditCard, AlertCircle } from "lucide-react";
 import Link from "next/link";
+import { cancelarAssinaturaAction } from "@/actions/subscription-actions";
 
 interface PlanOverviewCardProps {
   planName: string;
@@ -20,15 +25,42 @@ export function PlanOverviewCard({
   nextBillingDate 
 }: Readonly<PlanOverviewCardProps>) {
   
+  const [isCanceling, setIsCanceling] = useState(false);
+  const router = useRouter();
+
   const precoFormatado = new Intl.NumberFormat('pt-BR', {
     style: 'currency',
     currency: 'BRL'
   }).format(planPrice);
 
-  const isCancelado = status === "CANCELLED";
+  // 🔹 CORREÇÃO: Só consideramos cancelado se NÃO for o plano Free
+  const isCancelado = status === "CANCELLED" && !isFree;
+  
   const statusBadgeColor = isCancelado 
     ? "bg-red-100 text-red-700" 
     : "bg-green-100 text-green-700";
+
+  // Função para simular o gerenciamento do cartão
+  const handleGerenciarCartao = () => {
+    alert("Ambiente Ilustrativo: Como este é um projeto acadêmico, nenhum dado real de cartão é armazenado.");
+  };
+
+  // Função real que chama o backend para cancelar a assinatura
+  const handleCancelarAssinatura = async () => {
+    const confirmacao = window.confirm("Tem certeza que deseja cancelar sua assinatura? Você perderá o acesso aos recursos premium no próximo ciclo.");
+    if (!confirmacao) return;
+
+    setIsCanceling(true);
+    const res = await cancelarAssinaturaAction();
+    
+    if (res?.error) {
+      alert(res.error);
+      setIsCanceling(false);
+    } else {
+      router.refresh(); 
+      setIsCanceling(false);
+    }
+  };
 
   return (
     <div className="col-span-2 rounded-xl border border-border bg-card p-8 shadow-sm flex flex-col justify-between">
@@ -80,10 +112,20 @@ export function PlanOverviewCard({
             </div>
           </div>
         )}
+
+        {/* Aviso de Cancelamento */}
+        {isCancelado && (
+          <div className="flex items-start gap-2 mb-8 p-3 rounded-lg border border-red-200 bg-red-50 text-red-800 w-max max-w-full">
+            <AlertCircle size={16} className="mt-0.5 shrink-0" />
+            <p className="text-xs">
+              Sua assinatura foi cancelada, mas você ainda tem acesso aos recursos até o fim do período já pago.
+            </p>
+          </div>
+        )}
       </div>
       
       {/* Botões Dinâmicos */}
-      <div className="flex gap-4">
+      <div className="flex flex-wrap items-center gap-4">
         {isFree ? (
           <Link href="/plans">
             <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
@@ -92,14 +134,38 @@ export function PlanOverviewCard({
           </Link>
         ) : (
           <>
-            <Link href="/plans">
-              <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
-                Alterar Plano
-              </Button>
-            </Link>
-            <Button variant="outline" className="border-border text-foreground">
+            {isCancelado ? (
+              <Link href="/plans">
+                <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
+                  Retornar para o Free
+                </Button>
+              </Link>
+            ) : (
+              <Link href="/plans">
+                <Button className="bg-primary text-primary-foreground hover:bg-primary/90">
+                  Alterar Plano
+                </Button>
+              </Link>
+            )}
+            
+            <Button 
+              variant="outline" 
+              className="border-border text-foreground"
+              onClick={handleGerenciarCartao}
+            >
               Gerenciar Cartão
             </Button>
+
+            {!isCancelado && (
+              <Button 
+                variant="ghost" 
+                className="text-red-500 hover:text-red-700 hover:bg-red-50 ml-auto"
+                onClick={handleCancelarAssinatura}
+                disabled={isCanceling}
+              >
+                {isCanceling ? "Cancelando..." : "Cancelar Assinatura"}
+              </Button>
+            )}
           </>
         )}
       </div>

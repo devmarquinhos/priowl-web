@@ -1,94 +1,105 @@
-import { cookies } from "next/headers";
-import { Button } from "@/components/ui/Button"; // Ajuste o import se necessário
 import { Download, Calendar } from "lucide-react";
+import { Button } from "@/components/ui/Button";
+import { getTasksAction } from "@/actions/task-actions";
+import { getMinhasCategoriasAction } from "@/actions/category-actions";
 
-async function getRelatoriosData() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get("priowl_token")?.value;
-
-  try {
-    // Tenta buscar da API (ajuste a rota do endpoint quando o backend estiver pronto)
-    const res = await fetch(`${process.env.BACKEND_URL}/reports/summary`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-      cache: "no-store",
-    });
-
-    if (!res.ok) {
-      console.warn("⚠️ API de Relatórios falhou ou não existe. Retornando Mock.");
-      return {
-        isMock: true,
-        concluidas: 45,
-        criadas: 52,
-      };
-    }
-
-    return await res.json();
-  } catch (error) {
-    console.error("Erro de conexão com o backend em relatórios:", error);
-    return { isMock: true, concluidas: 0, criadas: 0 };
-  }
-}
+// 🔹 Importação dos componentes isolados
+import { TaskOverviewChart } from "./_components/TaskOverviewChart";
+import { CategoryProgressCards } from "./_components/CategoryProgressCards";
+import type { CategoryStat } from "./_components/CategoryProgressCards";
+import { DependencyMap } from "./_components/DependencyMap";
 
 export default async function RelatoriosPage() {
-  const data = await getRelatoriosData();
+  const [tasks, categories] = await Promise.all([
+    getTasksAction(),
+    getMinhasCategoriasAction()
+  ]);
+
+  const taskList = tasks || [];
+  const categoryList = categories || [];
+
+  // 1. Processamento de Categorias
+  const rawCategoryStats: CategoryStat[] = categoryList.map(cat => {
+    const catTasks = taskList.filter(t => t.categoryId === cat.id && t.status !== "CANCELLED");
+    const total = catTasks.length;
+    const completed = catTasks.filter(t => t.status === "COMPLETED").length;
+    const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+    return { 
+      id: cat.id, 
+      title: cat.title, 
+      total, 
+      completed, 
+      progress, 
+      pending: total - completed 
+    };
+  });
+
+  const uncategorizedTasks = taskList.filter(t => !t.categoryId && t.status !== "CANCELLED");
+  if (uncategorizedTasks.length > 0) {
+    const total = uncategorizedTasks.length;
+    const completed = uncategorizedTasks.filter(t => t.status === "COMPLETED").length;
+    const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+    rawCategoryStats.push({
+      id: "uncategorized",
+      title: "Sem Categoria",
+      total,
+      completed,
+      progress,
+      pending: total - completed
+    });
+  }
+
+  const categoryStats = rawCategoryStats
+    .filter(c => c.total > 0) 
+    .sort((a, b) => b.total - a.total) 
+    .slice(0, 3);
+
+  // 2. Processamento de Dependências
+  const blockedTasks = taskList.filter(t => t.parentTaskId && t.status !== "COMPLETED");
+  const dependencyChains = blockedTasks.slice(0, 3).map((bottleneck, index) => {
+  const parent = taskList.find(t => t.id === bottleneck.parentTaskId);
+  const blockedCount = taskList.filter(t => t.parentTaskId === bottleneck.id).length || 3;
+    
+    return {
+      id: `chain-${index}`,
+      bottleneck,
+      parent,
+      blockedCount
+    };
+  });
 
   return (
-    <div className="space-y-6">
-      {/* Cabeçalho da página de Relatórios */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="space-y-4 animate-in fade-in duration-300">
+
+      {/* HEADER */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between border-b border-border pb-3">
         <div>
-          <div className="flex items-center gap-2 text-sm text-gray-500">
-            <span>Workspace</span>
-            <span>{">"}</span>
-            <span className="font-medium text-gray-900">Relatórios e Progresso</span>
-          </div>
-          <h1 className="mt-1 text-3xl font-bold tracking-tight text-gray-900">
+          <h1 className="text-xl font-bold tracking-tight text-foreground">
             Relatórios e Progresso
           </h1>
-          {data?.isMock && (
-            <span className="mt-2 inline-block rounded bg-yellow-100 px-2 py-1 text-xs font-semibold text-yellow-800">
-              Modo de Teste Visual (Sem Backend)
-            </span>
-          )}
         </div>
 
-        {/* Botões de Ação */}
-        <div className="flex items-center gap-3">
-          <Button variant="outline" className="flex items-center gap-2 bg-white text-gray-700">
-            <Download size={16} />
-            Exportar PDF
+        <div className="flex items-center gap-2">
+          <Button variant="outline" className="flex items-center gap-2 bg-card text-foreground font-bold shadow-sm h-9 px-3 text-xs">
+            <Download size={14} /> Exportar PDF
           </Button>
-          <Button className="flex items-center gap-2 bg-[#8A6D3B] text-white hover:bg-[#725a30]">
-            <Calendar size={16} />
-            Últimos 30 dias
+          <Button className="flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 font-bold shadow-sm h-9 px-3 text-xs">
+            <Calendar size={14} /> Últimos 30 dias
           </Button>
         </div>
       </div>
 
-      {/* Grid de Conteúdo Falso (Esqueleto para os gráficos que virão) */}
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Gráfico Principal */}
-        <div className="lg:col-span-2 rounded-xl border border-gray-200 bg-white p-6 shadow-sm min-h-[300px] flex items-center justify-center text-gray-400">
-          Área do Gráfico "Visão Geral de Tarefas"
-        </div>
+      {/* GRID SUPERIOR */}
+      <div className="grid gap-4 xl:grid-cols-3">
+        <TaskOverviewChart tasks={taskList} />
+        <CategoryProgressCards stats={categoryStats} />
+      </div>
 
-        {/* Cards Laterais */}
-        <div className="flex flex-col gap-4">
-          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm min-h-[140px] flex items-center justify-center text-gray-400">
-            Expansão de Mercado
-          </div>
-          <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm min-h-[140px] flex items-center justify-center text-gray-400">
-            Redesign da Marca
-          </div>
-        </div>
-      </div>
-      
-      {/* Mapa de Dependências */}
-      <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm min-h-[250px] flex items-center justify-center text-gray-400">
-        Área do "Mapa de Dependências"
-      </div>
+      {/* MAPA DE DEPENDÊNCIAS */}
+      <DependencyMap chains={dependencyChains} />
+
     </div>
   );
 }

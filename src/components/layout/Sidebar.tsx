@@ -13,11 +13,11 @@ import {
 import { UserProfileResponse } from "@/types/user";
 import { getMinhaAssinaturaAction } from "@/actions/user-actions";
 import { getMinhasCategoriasAction } from "@/actions/category-actions"; 
-// 🔹 Importe o novo componente (ajuste o caminho se necessário)
+import { getTasksAction } from "@/actions/task-actions"; // 🔹 Importando a ação das tarefas
 import SidebarCategories from "@/components/layout/SidebarCategories"; 
 
 interface SideBarProps {
-  user: UserProfileResponse | null; 
+  readonly user: UserProfileResponse | null; 
 }
 
 export interface CategoryResponse {
@@ -28,7 +28,7 @@ export interface CategoryResponse {
   userId?: number | null; 
 }
 
-export default function Sidebar({ user }: Readonly<SideBarProps>) {
+export default function Sidebar({ user }: SideBarProps) {
   const pathname = usePathname();
   
   const [planName, setPlanName] = useState<string>("Carregando...");
@@ -36,13 +36,29 @@ export default function Sidebar({ user }: Readonly<SideBarProps>) {
 
   const fetchSidebarData = useCallback(async () => {
     try {
-      const [subscription, fetchedCategories] = await Promise.all([
+      // 🔹 Busca assinatura, categorias e TAREFAS paralelamente
+      const [subscription, fetchedCategories, fetchedTasks] = await Promise.all([
         getMinhaAssinaturaAction(),
-        getMinhasCategoriasAction()
+        getMinhasCategoriasAction(),
+        getTasksAction()
       ]);
       
+      const taskList = fetchedTasks || [];
+      
+      // 🔹 Cruza os dados: Conta tarefas ATIVAS para cada categoria
+      const categoriesWithCount = (fetchedCategories || []).map(cat => {
+        const activeTasksCount = taskList.filter(
+          t => t.categoryId === cat.id && t.status !== "COMPLETED" && t.status !== "CANCELLED"
+        ).length;
+        
+        return {
+          ...cat,
+          taskCount: activeTasksCount
+        };
+      });
+
       setPlanName(subscription?.planName || "Free");
-      setCategories(fetchedCategories || []);
+      setCategories(categoriesWithCount);
     } catch (error) {
       console.error("Erro ao carregar dados da sidebar:", error);
       setPlanName("Free");
@@ -108,7 +124,7 @@ export default function Sidebar({ user }: Readonly<SideBarProps>) {
 
       <div className="mx-6 my-4 border-t border-border"></div>
 
-      {/* 🔹 Categorias Dinâmicas isoladas no seu próprio componente */}
+      {/* Categorias Dinâmicas */}
       <SidebarCategories 
         categories={categories} 
         onRefresh={fetchSidebarData} 

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { 
   X, Trash2, Pin, Calendar, Link as LinkIcon, 
-  Plus, MoreVertical, Info, Edit3, Shield, CheckCircle2,
+  Plus, Info, Edit3, Shield, CheckCircle2,
   Check, Loader2
 } from "lucide-react";
 import type { TaskResponse, SubTaskResponse } from "@/actions/task-actions";
