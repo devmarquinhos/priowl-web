@@ -4,6 +4,7 @@ import { useTheme } from "next-themes";
 import { useEffect, useState, useCallback } from "react";
 import { Button } from "@/components/ui/Button";
 import { Globe, Circle, CheckCircle2, Monitor } from "lucide-react";
+import { salvarPreferenciasCookieAction } from "@/actions/user-actions"; // <-- Importe sua action aqui
 
 // Cores exatas da paleta
 const ACCENT_COLORS = [
@@ -13,6 +14,15 @@ const ACCENT_COLORS = [
   { id: "muted", name: "Cinza", hex: "#5E5E5E", hover: "#3F3F3F" },
 ];
 
+// Função utilitária para ler os cookies no Client-Side
+const getClientCookie = (name: string) => {
+  if (typeof document === "undefined") return null;
+  const value = `; ${document.cookie}`;
+  const parts = value.split(`; ${name}=`);
+  if (parts.length === 2) return parts.pop()?.split(';').shift() || null;
+  return null;
+};
+
 export function TabAparencia() {
   const { theme, setTheme } = useTheme();
   const [mounted, setMounted] = useState(false);
@@ -20,35 +30,39 @@ export function TabAparencia() {
   const [language, setLanguage] = useState("pt-BR");
   const [isLoading, setIsLoading] = useState(false);
 
+  // Preview dinâmico da cor: atualiza o CSS sem salvar no cookie ainda
   const applyColor = useCallback((colorId: string) => {
     const color = ACCENT_COLORS.find(c => c.id === colorId) || ACCENT_COLORS[0];
     document.documentElement.style.setProperty("--color-primary", color.hex);
     document.documentElement.style.setProperty("--color-primary-hover", color.hover);
     setActiveColor(colorId);
-    localStorage.setItem("priowl-accent", colorId);
   }, []);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
-    const savedColor = localStorage.getItem("priowl-accent") || "primary";
-    const savedLang = localStorage.getItem("priowl-lang") || "pt-BR";
+    const savedColor = getClientCookie("priowl-accent") || "primary";
+    const savedLang = getClientCookie("priowl-lang") || "pt-BR";
     setActiveColor(savedColor);
     setLanguage(savedLang);
-    applyColor(savedColor);
-  }, [applyColor]);
-
+    const color = ACCENT_COLORS.find(c => c.id === savedColor) || ACCENT_COLORS[0];
+    document.documentElement.style.setProperty("--color-primary", color.hex);
+    document.documentElement.style.setProperty("--color-primary-hover", color.hover);
+  }, []);
 
   const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const newLang = e.target.value;
-    setLanguage(newLang);
-    localStorage.setItem("priowl-lang", newLang);
+    setLanguage(e.target.value);
   };
 
   const handleSavePreferences = async () => {
     setIsLoading(true);
     try {
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Chama a Server Action para setar os cookies via servidor
+      await salvarPreferenciasCookieAction({
+        theme: theme || "system",
+        accentColor: activeColor,
+        language: language
+      });
       alert("Preferências sincronizadas com sucesso!");
     } catch (error) {
       console.error("Erro ao salvar:", error);
@@ -56,6 +70,21 @@ export function TabAparencia() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleDiscard = () => {
+    // Reverte a UI baseando-se no que está consolidado nos cookies
+    const savedColor = getClientCookie("priowl-accent") || "primary";
+    const savedLang = getClientCookie("priowl-lang") || "pt-BR";
+    const savedTheme = getClientCookie("priowl-theme") || "system";
+    
+    setActiveColor(savedColor);
+    setLanguage(savedLang);
+    setTheme(savedTheme);
+    
+    const color = ACCENT_COLORS.find(c => c.id === savedColor) || ACCENT_COLORS[0];
+    document.documentElement.style.setProperty("--color-primary", color.hex);
+    document.documentElement.style.setProperty("--color-primary-hover", color.hover);
   };
 
   if (!mounted) return null;
@@ -90,7 +119,7 @@ export function TabAparencia() {
                 <Circle className="text-[var(--border)]" size={24} fill="var(--background)" />
               )}
             </div>
-            {/* Gráfico Simulado - Mantém cores HEX literais para não depender do tema atual */}
+            {/* Gráfico Simulado */}
             <div className="mb-4 h-32 rounded-md border border-[#E5E7EB] bg-[#F9FAFB] p-2">
                <div className="mb-2 h-4 w-full rounded bg-[#FFFFFF] shadow-sm"></div>
                <div className="flex gap-2">
@@ -121,7 +150,7 @@ export function TabAparencia() {
                  <Circle className="text-[var(--border)]" size={24} fill="var(--background)" />
               )}
             </div>
-            {/* Gráfico Simulado - Mantém cores HEX literais para não depender do tema atual */}
+            {/* Gráfico Simulado */}
             <div className="mb-4 h-32 rounded-md border border-[#374151] bg-[#1F2937] p-2">
                <div className="mb-2 h-4 w-full rounded bg-[#374151]"></div>
                <div className="flex gap-2">
@@ -152,7 +181,7 @@ export function TabAparencia() {
                  <Circle className="text-[var(--border)]" size={24} fill="var(--background)" />
               )}
             </div>
-            {/* Gráfico Simulado - Mantém cores HEX literais para não depender do tema atual */}
+            {/* Gráfico Simulado */}
             <div className="mb-4 flex h-32 overflow-hidden rounded-md border border-[#E5E7EB]">
                <div className="w-1/2 bg-[#F9FAFB] p-2">
                  <div className="mb-2 h-4 w-full rounded bg-[#FFFFFF] shadow-sm"></div>
@@ -224,7 +253,12 @@ export function TabAparencia() {
 
       {/* AÇÕES */}
       <div className="flex justify-end gap-4 pt-4">
-        <Button variant="ghost" className="text-[var(--color-muted)] hover:bg-[var(--border)]/50">
+        {/* Agora o botão de Descartar tem utilidade real! */}
+        <Button 
+          variant="ghost" 
+          onClick={handleDiscard}
+          className="text-[var(--color-muted)] hover:bg-[var(--border)]/50"
+        >
           Descartar alterações
         </Button>
         <Button 

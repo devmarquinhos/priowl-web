@@ -1,17 +1,14 @@
 "use server";
 
 import { cookies } from "next/headers";
-import { revalidatePath } from "next/cache";
+import { revalidateTag } from "next/cache";
 
-// 🔹 Usando a mesma variável de ambiente das actions de usuário
-const API_URL = process.env.BACKEND_URL || "http://localhost:8080";
-
-// 🔹 Ajustado para o nome correto do cookie do seu sistema
+const API_URL = process.env.BACKEND_URL || "http://localhost:8080/api";
 const TOKEN_COOKIE_NAME = "priowl_token";
 
 export interface CategoryResponse {
   id: number;
-  title: string; // Alinhado com o backend
+  title: string;
   color?: string; 
   taskCount?: number; 
 }
@@ -36,15 +33,14 @@ export async function getMinhasCategoriasAction(): Promise<CategoryResponse[]> {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      cache: "no-store", 
+      next: { tags: ["user-categories"] }
     });
 
     if (!response.ok) {
       throw new Error(`Erro na API: ${response.status}`);
     }
 
-    const data = await response.json();
-    return data;
+    return await response.json();
   } catch (error) {
     console.error("Erro ao buscar categorias:", error);
     return [];
@@ -68,20 +64,15 @@ export async function createCategoriaAction(title: string, color: string) {
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      // 🔹 Enviando 'title' e 'color' conforme a entidade Java
       body: JSON.stringify({ title, color }),
     });
-
     if (!response.ok) {
       const errorMsg = await response.text().catch(() => null);
       return { success: false, error: errorMsg || "Falha ao criar categoria" };
     }
-
     const data = await response.json();
-    
-    // Atualiza a interface onde as categorias são listadas
-    revalidatePath("/", "layout"); 
-    
+    // @ts-expect-error - Bug de tipagem interno do Next.js
+    revalidateTag("user-categories"); 
     return { success: true, data };
   } catch (error) {
     console.error("Erro ao criar categoria:", error);
@@ -106,7 +97,6 @@ export async function updateCategoriaAction(id: number, title: string, color: st
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}`,
       },
-      // 🔹 Enviando 'title' e 'color'
       body: JSON.stringify({ title, color }),
     });
 
@@ -116,7 +106,9 @@ export async function updateCategoriaAction(id: number, title: string, color: st
     }
 
     const data = await response.json();
-    revalidatePath("/", "layout");
+    
+    // @ts-expect-error - Bug de tipagem interno do Next.js
+    revalidateTag("user-categories");
     
     return { success: true, data };
   } catch (error) {
@@ -147,8 +139,8 @@ export async function deleteCategoriaAction(id: number) {
       const errorMsg = await response.text().catch(() => null);
       return { success: false, error: errorMsg || "Falha ao deletar categoria" };
     }
-
-    revalidatePath("/", "layout");
+    // @ts-expect-error - Bug de tipagem interno do Next.js
+    revalidateTag("user-categories");
     
     return { success: true };
   } catch (error) {

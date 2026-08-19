@@ -17,14 +17,8 @@ export function TabPerfil({ user, fallback }: Readonly<TabPerfilProps>) {
   const router = useRouter(); // 🔹 Inicializado o router
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  
-  // Estados de feedback de atualização
   const [updateFeedback, setUpdateFeedback] = useState<{ type: "success" | "error", msg: string } | null>(null);
-
-  // useTransition para o formulário de atualizar sem travar a tela
   const [isPendingUpdate, startUpdate] = useTransition();
-
-  // Função para lidar com o envio do formulário de atualização (PUT /me)
   const handleUpdateProfile = (formData: FormData) => {
     setUpdateFeedback(null);
     startUpdate(async () => {
@@ -36,8 +30,6 @@ export function TabPerfil({ user, fallback }: Readonly<TabPerfilProps>) {
       }
     });
   };
-
-  // Função para lidar com a exclusão da conta (DELETE /me)
   const handleDeleteAccount = async () => {
     const confirmed = window.confirm("TEM CERTEZA? Esta ação é irreversível e todos os seus dados serão apagados.");
     if (!confirmed) return;

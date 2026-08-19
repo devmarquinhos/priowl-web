@@ -4,9 +4,38 @@ import { cookies } from "next/headers";
 import { revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { SubscriptionResponse, PlanResponse } from "@/types/subscription";
+import { UserProfileResponse } from "@/types/user";
 
-// Centraliza a URL do backend com fallback seguro para dev
 const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:8080";
+
+export async function getUserProfile(): Promise<UserProfileResponse | null> {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("priowl_token")?.value;
+
+  if (!token) return null;
+
+  try {
+    const res = await fetch(`${process.env.BACKEND_URL}/users/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+      next: { tags: ["user-profile"] },
+    });
+
+    if (!res.ok) return null;
+
+    return await res.json();
+  } catch (error) {
+    console.error("Erro ao buscar usuário:", error);
+    return null;
+  }
+}
+
+export async function salvarPreferenciasCookieAction(preferences: { theme: string, accentColor: string, language: string }) {
+  const cookieStore = await cookies();
+  const oneYearInSeconds = 60 * 60 * 24 * 365;
+  cookieStore.set("priowl-theme", preferences.theme, { maxAge: oneYearInSeconds, path: "/" });
+  cookieStore.set("priowl-accent", preferences.accentColor, { maxAge: oneYearInSeconds, path: "/" });
+  cookieStore.set("priowl-lang", preferences.language, { maxAge: oneYearInSeconds, path: "/" });
+}
 
 export async function getMinhaAssinaturaAction(): Promise<SubscriptionResponse | null> {
   try {
@@ -65,8 +94,6 @@ export async function atualizarPerfilAction(formData: FormData) {
   const token = cookieStore.get("priowl_token")?.value;
 
   try {
-    // Verifique se a rota do seu backend possui o prefixo /api. 
-    // Ex: ${BACKEND_URL}/api/users/me (Se for o caso, altere aqui)
     const res = await fetch(`${BACKEND_URL}/users/me`, {
       method: "PUT",
       headers: {

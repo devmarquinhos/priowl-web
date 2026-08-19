@@ -1,8 +1,7 @@
 import Sidebar from "@/components/layout/Sidebar";
 import { getUserProfile } from "@/services/user";
 
-export default async function BaseLayout({ children }: { children: React.ReactNode }) {
-  // Busca o usuário do cache/backend
+export default async function BaseLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const user = await getUserProfile();
 
   return (

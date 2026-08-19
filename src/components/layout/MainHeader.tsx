@@ -8,7 +8,7 @@ interface MainHeaderProps {
   user: UserProfileResponse | null; 
 }
 
-export default function MainHeader({ user }: MainHeaderProps) {
+export default function MainHeader({ user }: Readonly<MainHeaderProps>) {
   const fallback = user?.username ? user.username.substring(0, 2).toUpperCase() : "US";
   
   return (
