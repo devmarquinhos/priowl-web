@@ -2,20 +2,21 @@
 
 import { useState } from "react";
 import { updateTaskAction } from "@/actions/task-actions";
-import { Loader2, Edit2, CheckCircle, Calendar } from "lucide-react"; 
+import { Loader2, Edit2, CheckCircle, Clock } from "lucide-react"; 
 import { Button } from "@/components/ui/Button";
 import type { TaskResponse } from "@/actions/task-actions";
 import type { CategoryResponse } from "@/actions/category-actions";
 
 import { TaskDetailsModal } from "@/components/modals/TaskDetailsModal";
 import { TaskModal } from "@/components/modals/TaskModal";
+import { analyzeTaskDeadlines } from "@/services/deadline"; // 🔹 Import do serviço de prazos
 
 interface ProgressRingProps {
   readonly progress: number;
   readonly colorClass?: string;
 }
 
-// 🔹 Anel de progresso reduzido para ficar mais compacto
+// 🔹 Anel de progresso
 function ProgressRing({ progress, colorClass = "text-primary" }: ProgressRingProps) {
   const radius = 16;
   const circumference = radius * 2 * Math.PI;
@@ -54,6 +55,23 @@ export function TaskItem({ task, isCritical = false, categories, allTasks }: Tas
   const parentTask = allTasks?.find(t => t.id === task.parentTaskId);
   const isBlockedByDependency = !!task.parentTaskId && parentTask?.status !== "COMPLETED";
   
+  // 🔹 ANÁLISE DE PRAZOS (Adaptando o TaskResponse para o formato esperado pelo serviço se necessário)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [analyzedTask] = analyzeTaskDeadlines([{ ...task, dueDate: task.deadline } as any]);
+
+  // Se a tarefa for crítica (importance === 5), garantimos a borda vermelha, caso contrário, usamos a do analisador
+  const borderClass = isCritical ? "border-red-500" : (analyzedTask?.borderClass ?? "border-border");
+  const badgeClass = analyzedTask?.badgeClass ?? "bg-muted text-muted-foreground border-border";
+  const timeLeftText = analyzedTask?.timeLeftText ?? "Sem prazo";
+  
+  const categoryName = categories?.find(c => c.id === task.categoryId)?.title;
+  const ringColor = isCritical || borderClass.includes("red") ? "text-red-500" : "text-primary";
+  
+  // 🔹 Formatação da data 
+  const formattedDeadline = task.deadline 
+    ? new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short', timeZone: 'UTC' }).format(new Date(task.deadline))
+    : null;
+
   const handleQuickComplete = async (e: React.MouseEvent) => {
     e.stopPropagation(); 
     
@@ -75,7 +93,6 @@ export function TaskItem({ task, isCritical = false, categories, allTasks }: Tas
       };
 
       await updateTaskAction(task.id, payloadCompleto);
-      
     } catch (error) {
       console.error("Erro ao concluir tarefa:", error);
       alert("Erro ao tentar concluir a tarefa.");
@@ -84,15 +101,6 @@ export function TaskItem({ task, isCritical = false, categories, allTasks }: Tas
     }
   };
 
-  const categoryName = categories?.find(c => c.id === task.categoryId)?.title;
-  const ringColor = isCritical ? "text-red-500" : "text-primary";
-  
-  // 🔹 Formatação amigável do prazo (Ex: 12 out)
-  const formattedDeadline = task.deadline 
-  ? new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short', timeZone: 'UTC' })
-      .format(new Date(task.deadline))
-  : null;
-  
   return (
     <>
       <div 
@@ -107,14 +115,13 @@ export function TaskItem({ task, isCritical = false, categories, allTasks }: Tas
         role="button"
         tabIndex={0}
         aria-label={`Ver detalhes da tarefa: ${task.title}`}
-        className={`flex items-center justify-between p-3 bg-card border rounded-lg shadow-sm mb-2 transition-all hover:shadow-md cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/50
-        ${isCritical ? 'border-l-4 border-l-red-500 border-t-border border-r-border border-b-border' : 'border-border'}
-      `}>
+        className={`flex items-center justify-between p-3 bg-card rounded-lg shadow-sm mb-2 transition-all hover:shadow-md cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary/50 border-t border-r border-b border-l-4 ${borderClass}`}
+      >
         <div className="flex items-center gap-3 overflow-hidden">
           <ProgressRing progress={task.branchProgress || 0} colorClass={ringColor} />
           
           <div className="flex flex-col truncate">
-            {/* 🔹 Título e Categoria */}
+            {/* Título e Categoria */}
             <div className="flex items-center gap-2 mb-0.5">
               <h3 className="font-bold text-foreground text-sm truncate">{task.title}</h3>
               
@@ -133,19 +140,23 @@ export function TaskItem({ task, isCritical = false, categories, allTasks }: Tas
           </div>
         </div>
 
-        {/* 🔹 Container da Direita: Prazo + Botões de ação */}
+        {/* 🔹 Container da Direita: Status do Prazo + Botões de ação */}
         <div className="flex items-center gap-3 ml-2 shrink-0">
           
-          {/* 🔹 Exibição do Prazo na Direita com bg-primary */}
-          {formattedDeadline && (
-            <span className="flex items-center gap-1 px-2 py-1 rounded bg-primary text-primary-foreground text-[10px] font-bold shrink-0">
-              <Calendar size={10} className="shrink-0" />
-              {formattedDeadline}
-            </span>
+          {/* 🔹 Exibição Integrada do Analisador de Prazos */}
+          {task.deadline && (
+            <div className="flex flex-col items-end justify-center gap-1">
+              <span className={`px-2 py-0.5 text-[9px] font-bold uppercase rounded-full border ${badgeClass} shrink-0 leading-none`}>
+                {timeLeftText}
+              </span>
+              <span className="flex items-center gap-1 text-[10px] text-muted-foreground font-medium shrink-0">
+                <Clock size={10} />
+                {formattedDeadline}
+              </span>
+            </div>
           )}
 
-          <div className="flex items-center gap-1">
-            {/* 🔹 Botão Editar */}
+          <div className="flex items-center gap-1 ml-1">
             <Button 
               variant="ghost" 
               className="flex items-center justify-center h-8 w-8 p-0 rounded-full text-muted-foreground hover:bg-muted hover:text-foreground" 
@@ -158,12 +169,11 @@ export function TaskItem({ task, isCritical = false, categories, allTasks }: Tas
               <Edit2 size={16} className="shrink-0 text-muted-foreground hover:text-foreground" />
             </Button>
             
-            {/* 🔹 Botão Concluir */}
             <Button 
               variant="ghost" 
               className="flex items-center justify-center h-8 w-8 p-0 rounded-full text-muted-foreground hover:bg-green-500/10 hover:text-green-600 dark:hover:text-green-400" 
               title="Concluir Tarefa"
-              disabled={isCompleting}
+              disabled={isCompleting || task.status === "COMPLETED"}
               onClick={handleQuickComplete} 
             >
               {isCompleting ? (
@@ -176,6 +186,7 @@ export function TaskItem({ task, isCritical = false, categories, allTasks }: Tas
         </div>
       </div>
 
+      {/* Modais mantidos intactos */}
       {isDetailsOpen && (
         <TaskDetailsModal 
           isOpen={isDetailsOpen}

@@ -3,12 +3,14 @@ import NotificationBell from "./NotificationBell";
 import { Avatar } from "@/components/ui/Avatar"; 
 import { UserProfileResponse } from "@/types/user";
 import Link from "next/link"; // 🔹 Importação do Link do Next.js
+import { Task } from "@/types/task";
 
 interface MainHeaderProps {
-  user: UserProfileResponse | null; 
+  user: UserProfileResponse | null;
+  readonly tasks?: readonly Task[];
 }
 
-export default function MainHeader({ user }: Readonly<MainHeaderProps>) {
+export default function MainHeader({ user, tasks }: Readonly<MainHeaderProps>) {
   const fallback = user?.username ? user.username.substring(0, 2).toUpperCase() : "US";
   
   return (
@@ -19,7 +21,7 @@ export default function MainHeader({ user }: Readonly<MainHeaderProps>) {
       </div>
 
       <div className="flex items-center gap-6">
-        <NotificationBell/>
+        <NotificationBell userTasks={tasks}/>
         
         <div className="h-8 w-px bg-border"></div>
 

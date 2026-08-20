@@ -3,12 +3,14 @@ import NotificationBell from "./NotificationBell";
 import { Avatar } from "@/components/ui/Avatar";
 import { UserProfileResponse } from "@/types/user";
 import { CircleHelp } from "lucide-react";
+import { Task } from "@/types/task";
 
 interface SettingsHeaderProps {
   user: UserProfileResponse | null;
+  readonly tasks?: readonly Task[];
 }
 
-export default function SettingsHeader({ user }: Readonly<SettingsHeaderProps>) {
+export default function SettingsHeader({ user, tasks }: Readonly<SettingsHeaderProps>) {
   const fallback = user?.username ? user.username.substring(0, 2).toUpperCase() : "US";
 
   return (
@@ -27,15 +29,7 @@ export default function SettingsHeader({ user }: Readonly<SettingsHeaderProps>) 
         </div>
 
         <div className="flex items-center gap-1">
-          <NotificationBell/>
-          
-          <button 
-            type="button" 
-            className="flex items-center justify-center rounded-full p-2 text-muted transition-colors hover:bg-gray-100 hover:text-foreground dark:hover:bg-gray-800 focus:outline-none"
-            title="Ajuda e Suporte"
-          >
-            <CircleHelp size={22} strokeWidth={1.5} />
-          </button>
+          <NotificationBell userTasks={tasks}/>
         </div>
 
         <div className="mx-2 h-8 w-px bg-border"></div>

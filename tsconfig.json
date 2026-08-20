@@ -29,6 +29,6 @@
     ".next/types/**/*.ts",
     ".next/dev/types/**/*.ts",
     "**/*.mts"
-, "../DetalhesTarefaModal.tsx", "src/app/[locale]/redefinir-senha", "src/app/[locale]/(admin)/admin/billing"  ],
+, "../DetalhesTarefaModal.tsx", "src/app/[locale]/redefinir-senha", "src/app/[locale]/(admin)/admin/billing.tsx"  ],
   "exclude": ["node_modules"]
 }
