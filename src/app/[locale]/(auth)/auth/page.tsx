@@ -121,7 +121,7 @@ function AuthContent() {
           
           <div className="flex flex-col items-center text-center mb-6">
             <Image 
-                  src="feather-1.svg" 
+                  src="/feather-1.svg" 
                   alt="Logo Priowl" 
                   width={28} 
                   height={28} 
@@ -277,7 +277,7 @@ function AuthContent() {
         
         <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
           <Image 
-                  src="logo-1.svg" 
+                  src="/logo-1.svg" 
                   alt="Logo Priowl" 
                   width={200} 
                   height={200} 
