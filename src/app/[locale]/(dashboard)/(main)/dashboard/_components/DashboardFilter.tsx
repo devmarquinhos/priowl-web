@@ -26,7 +26,7 @@ export function DashboardFilter() {
   const currentImportance = searchParams.get("importance") || "all";
   const currentDate = searchParams.get("date") || "";
 
-  // Conta quantos filtros estão diferentes do "padrão" para mostrar um badge
+  // Conta quantos filtros estão diferentes do "padrão" para mostrar o badge
   let activeFiltersCount = 0;
   if (currentStatus !== "pending") activeFiltersCount++;
   if (currentImportance !== "all") activeFiltersCount++;
@@ -35,14 +35,12 @@ export function DashboardFilter() {
   const updateParams = (key: string, value: string) => {
     const params = new URLSearchParams(searchParams.toString());
     
-    // Mapeia o valor padrão de cada chave
     const defaults: Record<string, string> = {
       filter: "pending",
       importance: "all",
       date: "",
     };
 
-    // Mantém na URL se for diferente do padrão; remove se voltar ao padrão
     if (value && value !== defaults[key]) {
       params.set(key, value);
     } else {
@@ -53,7 +51,6 @@ export function DashboardFilter() {
   };
 
   const clearFilters = () => {
-    // Reseta tudo mantendo apenas o parâmetro de texto (q) se houver
     const params = new URLSearchParams(searchParams.toString());
     params.delete("filter");
     params.delete("importance");
@@ -66,7 +63,10 @@ export function DashboardFilter() {
     <div className="relative" ref={dropdownRef}>
       {/* BOTÃO DISPARADOR */}
       <button
+        type="button"
         onClick={() => setIsOpen(!isOpen)}
+        aria-expanded={isOpen}
+        aria-label="Abrir filtros de tarefas"
         className={`h-9 px-3 py-2 text-xs font-bold border rounded-md flex items-center gap-2 transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20 ${
           isOpen || activeFiltersCount > 0
             ? "bg-muted/50 border-border text-foreground"
@@ -75,7 +75,6 @@ export function DashboardFilter() {
       >
         <Filter size={14} />
         Filtros
-        {/* Badge mostrando quantos filtros estão ativos */}
         {activeFiltersCount > 0 && (
           <span className="flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] text-primary-foreground">
             {activeFiltersCount}
@@ -83,7 +82,7 @@ export function DashboardFilter() {
         )}
       </button>
 
-      {/* MODALZINHO SUSPENSO (DROPDOWN) */}
+      {/* DROPDOWN DE FILTROS */}
       {isOpen && (
         <div className="absolute right-0 mt-2 w-64 p-3 bg-card border border-border rounded-lg shadow-xl z-50 flex flex-col gap-4 animate-in fade-in zoom-in-95 duration-200 origin-top-right">
           
@@ -91,6 +90,7 @@ export function DashboardFilter() {
             <span className="text-xs font-bold text-foreground">Filtrar Tarefas</span>
             {activeFiltersCount > 0 && (
               <button 
+                type="button"
                 onClick={clearFilters}
                 className="text-[10px] font-semibold text-muted-foreground hover:text-red-500 transition-colors flex items-center gap-1"
               >
@@ -103,8 +103,11 @@ export function DashboardFilter() {
           <div className="flex flex-col gap-3">
             {/* 1. Status */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Status</label>
+              <label htmlFor="filter-status" className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                Status
+              </label>
               <select
+                id="filter-status"
                 value={currentStatus}
                 onChange={(e) => updateParams("filter", e.target.value)}
                 className="h-8 px-2 py-1 text-xs bg-background border border-border rounded-md outline-none focus:border-primary w-full text-foreground cursor-pointer"
@@ -117,23 +120,30 @@ export function DashboardFilter() {
 
             {/* 2. Importância */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Importância</label>
+              <label htmlFor="filter-importance" className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                Importância
+              </label>
               <select
+                id="filter-importance"
                 value={currentImportance}
                 onChange={(e) => updateParams("importance", e.target.value)}
                 className="h-8 px-2 py-1 text-xs bg-background border border-border rounded-md outline-none focus:border-primary w-full text-foreground cursor-pointer"
               >
                 <option value="all">Qualquer Nível</option>
-                <option value="critical">Críticas (Nível 5)</option>
-                <option value="pinned">Fixadas (Nível 3-4)</option>
-                <option value="normal">Trabalho (Nível 1-2)</option>
+                <option value="critical">Crítica (Nível 5)</option>
+                <option value="high">Alta (Nível 4)</option>
+                <option value="medium">Média (Nível 3)</option>
+                <option value="low">Baixa / Mínima (Nível 1-2)</option>
               </select>
             </div>
 
             {/* 3. Data */}
             <div className="flex flex-col gap-1.5">
-              <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Data Alvo</label>
+              <label htmlFor="filter-date" className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                Data Alvo
+              </label>
               <input
+                id="filter-date"
                 type="date"
                 value={currentDate}
                 onChange={(e) => updateParams("date", e.target.value)}

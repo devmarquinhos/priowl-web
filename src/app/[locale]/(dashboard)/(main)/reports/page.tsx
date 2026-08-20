@@ -18,9 +18,9 @@ export default async function RelatoriosPage() {
   const taskList = tasks || [];
   const categoryList = categories || [];
 
-  // 1. Processamento de Categorias
+  // 1. Processamento de Categorias (com conversão de ID para String)
   const rawCategoryStats: CategoryStat[] = categoryList.map(cat => {
-    const catTasks = taskList.filter(t => t.categoryId === cat.id && t.status !== "CANCELLED");
+    const catTasks = taskList.filter(t => String(t.categoryId) === String(cat.id) && t.status !== "CANCELLED");
     const total = catTasks.length;
     const completed = catTasks.filter(t => t.status === "COMPLETED").length;
     const progress = total > 0 ? Math.round((completed / total) * 100) : 0;
@@ -56,11 +56,16 @@ export default async function RelatoriosPage() {
     .sort((a, b) => b.total - a.total) 
     .slice(0, 3);
 
-  // 2. Processamento de Dependências
-  const blockedTasks = taskList.filter(t => t.parentTaskId && t.status !== "COMPLETED");
+  // 2. Processamento de Dependências (Valida se o PAI está pendente)
+  const blockedTasks = taskList.filter(t => {
+    if (!t.parentTaskId || t.status === "COMPLETED") return false;
+    const parent = taskList.find(p => String(p.id) === String(t.parentTaskId));
+    return parent && parent.status !== "COMPLETED"; // Só é gargalo se o pai estiver pendente
+  });
+
   const dependencyChains = blockedTasks.slice(0, 3).map((bottleneck, index) => {
-  const parent = taskList.find(t => t.id === bottleneck.parentTaskId);
-  const blockedCount = taskList.filter(t => t.parentTaskId === bottleneck.id).length || 3;
+    const parent = taskList.find(t => String(t.id) === String(bottleneck.parentTaskId));
+    const blockedCount = taskList.filter(t => String(t.parentTaskId) === String(bottleneck.id)).length;
     
     return {
       id: `chain-${index}`,
@@ -81,14 +86,6 @@ export default async function RelatoriosPage() {
           </h1>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Button variant="outline" className="flex items-center gap-2 bg-card text-foreground font-bold shadow-sm h-9 px-3 text-xs">
-            <Download size={14} /> Exportar PDF
-          </Button>
-          <Button className="flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 font-bold shadow-sm h-9 px-3 text-xs">
-            <Calendar size={14} /> Últimos 30 dias
-          </Button>
-        </div>
       </div>
 
       {/* GRID SUPERIOR */}

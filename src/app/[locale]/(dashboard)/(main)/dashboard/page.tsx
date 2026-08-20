@@ -1,6 +1,5 @@
 import { 
   AlertCircle, 
-  Pin, 
   Briefcase, 
   TrendingUp, 
   CheckCircle2, 
@@ -10,7 +9,6 @@ import {
   ChevronRight,
   XCircle
 } from "lucide-react";
-import Link from "next/link";
 import { getTasksAction, getDashboardSummaryAction } from "@/actions/task-actions";
 import { getMinhasCategoriasAction } from "@/actions/category-actions";
 import { getUserProfile } from "@/actions/user-actions"; 
@@ -44,12 +42,11 @@ type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
 export default async function DashboardPage(props: Readonly<{ searchParams: SearchParams }>) {
   const searchParams = await props.searchParams;
   
-  // 🔹 1. Lendo os parâmetros (Adicionamos o categoryFilter)
   const filter = (searchParams?.filter as string) || "all"; 
   const searchQuery = (searchParams?.q as string) || "";
   const importanceFilter = (searchParams?.importance as string) || "all";
   const dateFilter = (searchParams?.date as string) || "";
-  const categoryFilter = searchParams?.category as string | undefined; // <--- NOVO
+  const categoryFilter = searchParams?.category as string | undefined;
 
   const [userProfile, summary, taskList, categoryList] = await Promise.all([
     getUserProfile(),
@@ -64,14 +61,13 @@ export default async function DashboardPage(props: Readonly<{ searchParams: Sear
   const pendingCount = summary?.pendingTasks || 0;
   const overallProgress = summary?.overallProgress || 0;
 
-  // 🔹 2. COMEÇANDO A FILTRAGEM
+  // 🔹 FILTRAGEM
   let displayTasks = [...taskList];
 
   if (categoryFilter) {
-    displayTasks = displayTasks.filter(t => t.categoryId === Number(categoryFilter));
+    displayTasks = displayTasks.filter(t => Number(t.categoryId) === Number(categoryFilter));
   }
   
-  // Filtro de Status
   if (filter === "pending") {
     displayTasks = displayTasks.filter(t => t.status !== "COMPLETED" && t.status !== "CANCELLED");
   } else if (filter === "completed") {
@@ -80,7 +76,6 @@ export default async function DashboardPage(props: Readonly<{ searchParams: Sear
     displayTasks = displayTasks.filter(t => t.status === "CANCELLED");
   }
 
-  // Filtro de Pesquisa (Texto)
   if (searchQuery) {
     const lowerQuery = searchQuery.toLowerCase();
     displayTasks = displayTasks.filter(t => 
@@ -89,14 +84,11 @@ export default async function DashboardPage(props: Readonly<{ searchParams: Sear
     );
   }
 
-  // Filtro de Importância
   if (importanceFilter !== "all") {
-    if (importanceFilter === "critical") displayTasks = displayTasks.filter(t => t.importance === 5);
-    if (importanceFilter === "pinned") displayTasks = displayTasks.filter(t => t.importance === 3 || t.importance === 4);
-    if (importanceFilter === "normal") displayTasks = displayTasks.filter(t => !t.importance || t.importance <= 2);
+    if (importanceFilter === "critical") displayTasks = displayTasks.filter(t => Number(t.importance) === 5);
+    if (importanceFilter === "normal") displayTasks = displayTasks.filter(t => Number(t.importance) !== 5);
   }
 
-  // Filtro de Data
   if (dateFilter) {
     displayTasks = displayTasks.filter(t => {
       if (!t.deadline) return false; 
@@ -104,7 +96,7 @@ export default async function DashboardPage(props: Readonly<{ searchParams: Sear
     });
   }
 
-  // 🔹 3. ORDENAÇÃO POR PRAZO
+  // 🔹 ORDENAÇÃO POR PRAZO
   displayTasks.sort((a, b) => {
     if (!a.deadline && !b.deadline) return 0;
     if (!a.deadline) return 1;  
@@ -112,18 +104,16 @@ export default async function DashboardPage(props: Readonly<{ searchParams: Sear
     return new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
   });
 
-  // 🔹 4. AGRUPAMENTO INTELIGENTE
+  // 🔹 AGRUPAMENTO
   const completedTasks = displayTasks.filter(t => t.status === "COMPLETED");
-  const cancelledTasks = displayTasks.filter(t => t.status === "CANCELLED"); // 🔹 Novo Grupo
+  const cancelledTasks = displayTasks.filter(t => t.status === "CANCELLED"); 
   const activeTasks = displayTasks.filter(t => t.status !== "COMPLETED" && t.status !== "CANCELLED");
-
-  const criticalTasks = activeTasks.filter(t => t.importance === 5);
-  const pinnedTasks = activeTasks.filter(t => t.importance === 4 || t.importance === 3);
-  const workTasks = activeTasks.filter(t => !t.importance || t.importance <= 2);
+  
+  const criticalTasks = activeTasks.filter(t => Number(t.importance) === 5);
+  const workTasks = activeTasks.filter(t => Number(t.importance) !== 5);
 
   return (
     <div className="space-y-4 animate-in fade-in duration-300">
-
       {/* HEADER COMPACTO */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 border-b border-border pb-3">
         <div>
@@ -141,7 +131,6 @@ export default async function DashboardPage(props: Readonly<{ searchParams: Sear
 
       {/* METRICAS / RESUMO GERAL */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
-        {/* Card 1: Progresso Geral */}
         <div className="p-3 bg-card border border-border rounded-lg shadow-sm flex flex-col justify-between">
           <div className="flex items-center justify-between text-muted-foreground mb-1.5">
             <span className="text-[10px] font-bold uppercase tracking-wider">Progresso</span>
@@ -160,7 +149,6 @@ export default async function DashboardPage(props: Readonly<{ searchParams: Sear
           </div>
         </div>
 
-        {/* Card 2: Tarefas Ativas */}
         <div className="p-3 bg-card border border-border rounded-lg shadow-sm flex flex-col justify-between">
           <div className="flex items-center justify-between text-muted-foreground mb-1.5">
             <span className="text-[10px] font-bold uppercase tracking-wider">Ativas</span>
@@ -171,7 +159,6 @@ export default async function DashboardPage(props: Readonly<{ searchParams: Sear
           </div>
         </div>
 
-        {/* Card 3: Concluídas */}
         <div className="p-3 bg-card border border-border rounded-lg shadow-sm flex flex-col justify-between">
           <div className="flex items-center justify-between text-muted-foreground mb-1.5">
             <span className="text-[10px] font-bold uppercase tracking-wider">Concluídas</span>
@@ -182,7 +169,6 @@ export default async function DashboardPage(props: Readonly<{ searchParams: Sear
           </div>
         </div>
 
-        {/* Card 4: Pendentes / Em Andamento */}
         <div className="p-3 bg-card border border-border rounded-lg shadow-sm flex flex-col justify-between">
           <div className="flex items-center justify-between text-muted-foreground mb-1.5">
             <span className="text-[10px] font-bold uppercase tracking-wider">Pendentes</span>
@@ -204,7 +190,7 @@ export default async function DashboardPage(props: Readonly<{ searchParams: Sear
       {/* LISTAGEM DE TAREFAS */}
       <div className="pb-10 space-y-1">
 
-        {/* Críticas (Ativas) - OPEN por padrão */}
+        {/* Críticas */}
         {criticalTasks.length > 0 && (
           <details open className="group">
             <SectionHeader title="Crítica" icon={AlertCircle} colorClass="bg-red-500/10 text-red-600 dark:text-red-400" />
@@ -216,19 +202,7 @@ export default async function DashboardPage(props: Readonly<{ searchParams: Sear
           </details>
         )}
 
-        {/* Fixadas (Ativas) - OPEN por padrão */}
-        {pinnedTasks.length > 0 && (
-          <details open className="group">
-            <SectionHeader title="Fixadas" icon={Pin} colorClass="bg-muted text-foreground" />
-            <div className="flex flex-col gap-2 pl-2">
-              {pinnedTasks.map(task => (
-                <TaskItem key={task.id} task={task} categories={categoryList} allTasks={taskList} />
-              ))}
-            </div>
-          </details>
-        )}
-
-        {/* Trabalho (Ativas) - OPEN por padrão */}
+        {/* Trabalho */}
         {workTasks.length > 0 && (
           <details open className="group">
             <SectionHeader title="Trabalho" icon={Briefcase} colorClass="bg-primary/10 text-primary" />
@@ -240,7 +214,7 @@ export default async function DashboardPage(props: Readonly<{ searchParams: Sear
           </details>
         )}
 
-        {/* 🔹 Concluídas - FECHADAS por padrão */}
+        {/* Concluídas */}
         {completedTasks.length > 0 && (
           <details className="group mt-6">
             <SectionHeader title="Concluídas" icon={CheckCircle2} colorClass="bg-green-500/10 text-green-600 dark:text-green-400" />
@@ -252,7 +226,7 @@ export default async function DashboardPage(props: Readonly<{ searchParams: Sear
           </details>
         )}
 
-        {/* 🔹 Canceladas - FECHADAS por padrão */}
+        {/* Canceladas */}
         {cancelledTasks.length > 0 && (
           <details className="group mt-2">
             <SectionHeader title="Canceladas" icon={XCircle} colorClass="bg-muted text-muted-foreground" />

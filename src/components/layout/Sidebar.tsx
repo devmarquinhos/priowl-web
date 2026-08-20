@@ -68,6 +68,12 @@ export default function Sidebar({ user }: SideBarProps) {
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchSidebarData();
+    const handleUpdate = () => {
+      fetchSidebarData();
+    };
+    window.addEventListener("tasks-updated", handleUpdate);
+
+    return () => window.removeEventListener("tasks-updated", handleUpdate);
   }, [fetchSidebarData]);
 
   const mainNav = [

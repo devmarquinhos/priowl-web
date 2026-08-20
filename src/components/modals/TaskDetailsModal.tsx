@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { createPortal } from "react-dom"; // 🔹 Importação do Portal
+import { createPortal } from "react-dom";
 import { 
   X, Calendar, Edit2, CheckCircle, RefreshCw, 
   Check, Clock, Lock, Shield, Trash2, Loader2
@@ -20,6 +20,21 @@ interface TaskDetailsModalProps {
   readonly categories?: CategoryResponse[];
 }
 
+const STATUS_CONFIG = {
+  PENDING: { label: "Pendente", className: "bg-muted text-muted-foreground border-border", Icon: Clock },
+  IN_PROGRESS: { label: "Em Progresso", className: "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400 border-yellow-500/20", Icon: RefreshCw },
+  COMPLETED: { label: "Concluída", className: "bg-green-500/10 text-green-600 dark:text-green-400 border-green-500/20", Icon: CheckCircle },
+  CANCELLED: { label: "Cancelada", className: "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20", Icon: X },
+} as const;
+
+const IMPORTANCE_CONFIG = {
+  5: { label: "Crítica", className: "bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/20" },
+  4: { label: "Alta", className: "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20" },
+  3: { label: "Média", className: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20" },
+  2: { label: "Baixa", className: "bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/20" },
+  1: { label: "Mínima", className: "bg-muted text-muted-foreground border-border" },
+} as const;
+
 export function TaskDetailsModal({ 
   isOpen, 
   onClose, 
@@ -28,7 +43,6 @@ export function TaskDetailsModal({
   allTasks = [], 
   categories = [] 
 }: TaskDetailsModalProps) {
-  // 🔹 Estado para garantir que o Portal só renderize no lado do cliente (Navegador)
   const [mounted, setMounted] = useState(false);
   const [isCompleting, setIsCompleting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -36,53 +50,42 @@ export function TaskDetailsModal({
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
+  }, []);
+
+  useEffect(() => {
+    if (!mounted) return;
+
     if (isOpen) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "unset";
     }
-    
-    return () => { document.body.style.overflow = "unset"; };
-  }, [isOpen]);
+
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [isOpen, mounted]);
 
   if (!isOpen || !task || !mounted) return null;
 
-  // Configurações visuais
-  const statusConfig = {
-    PENDING: { label: "Pendente", className: "bg-muted text-muted-foreground border-border", Icon: Clock },
-    IN_PROGRESS: { label: "Em Progresso", className: "bg-yellow-500/10 text-yellow-600 border-yellow-500/20", Icon: RefreshCw },
-    COMPLETED: { label: "Concluída", className: "bg-green-500/10 text-green-600 border-green-500/20", Icon: CheckCircle },
-    CANCELLED: { label: "Cancelada", className: "bg-red-500/10 text-red-600 border-red-500/20", Icon: X },
-  };
-  const currentStatus = statusConfig[task.status as keyof typeof statusConfig] || statusConfig.PENDING;
-  
-  const importanceConfig = {
-    5: { label: "Crítica", className: "bg-red-500/10 text-red-600 border-red-500/20" },
-    4: { label: "Alta", className: "bg-orange-500/10 text-orange-600 border-orange-500/20" },
-    3: { label: "Média", className: "bg-blue-500/10 text-blue-600 border-blue-500/20" },
-    2: { label: "Baixa", className: "bg-slate-500/10 text-slate-600 border-slate-500/20" },
-    1: { label: "Mínima", className: "bg-muted text-muted-foreground border-border" },
-  };
-  const currentImportance = importanceConfig[(task.importance as keyof typeof importanceConfig) || 3] || importanceConfig[3];
-  
+  const currentStatus = STATUS_CONFIG[task.status as keyof typeof STATUS_CONFIG] || STATUS_CONFIG.PENDING;
+  const currentImportance = IMPORTANCE_CONFIG[(task.importance as keyof typeof IMPORTANCE_CONFIG) || 3] || IMPORTANCE_CONFIG[3];
+
   const rawDate = task.deadline;
   const formattedDate = rawDate ? new Date(rawDate).toLocaleDateString('pt-BR') : "Sem data";
   const progressPercentage = task.branchProgress || 0;
-  
+
   const subtasks: SubTaskResponse[] = task.subtasks || []; 
   const completedSubtasksCount = subtasks.filter(st => st.status === "COMPLETED").length;
-  
+
   const parentTask = allTasks.find(t => t.id === task.parentTaskId);
   const parentTaskName = parentTask ? parentTask.title : `Tarefa #${task.parentTaskId}`;
-  
+
   const isBlockedByDependency = !!task.parentTaskId && parentTask?.status !== "COMPLETED";
 
   const category = categories.find(c => c.id === task.categoryId);
   const categoryName = category ? category.title : "Sem categoria";
 
-  /* =========================================================
-     FUNÇÕES DE AÇÃO
-     ========================================================= */
   const handleComplete = async () => {
     if (isBlockedByDependency) {
       alert(`Não é possível concluir. Conclua a tarefa "${parentTaskName}" primeiro.`);
@@ -90,13 +93,19 @@ export function TaskDetailsModal({
     }
     
     setIsCompleting(true);
-    const result = await updateTaskAction(task.id, { status: "COMPLETED" });
-    setIsCompleting(false);
-
-    if (result.success) {
-      onClose();
-    } else {
-      alert(result.error || "Erro ao concluir a tarefa.");
+    try {
+      const result = await updateTaskAction(task.id, { status: "COMPLETED" });
+      if (result.success) {
+        onClose();
+        window.dispatchEvent(new Event("tasks-updated"));
+      } else {
+        alert(result.error || "Erro ao concluir a tarefa.");
+      }
+    } catch (error) {
+      console.error("Erro ao concluir tarefa:", error);
+      alert("Erro inesperado ao conectar com o servidor.");
+    } finally {
+      setIsCompleting(false);
     }
   };
 
@@ -104,26 +113,34 @@ export function TaskDetailsModal({
     if (!window.confirm("Tem certeza que deseja excluir esta tarefa de forma permanente?")) return;
 
     setIsDeleting(true);
-    const result = await deleteTaskAction(task.id);
-    setIsDeleting(false);
-
-    if (result.success) {
-      onClose();
-    } else {
-      alert(result.error || "Erro ao deletar a tarefa.");
+    try {
+      const result = await deleteTaskAction(task.id);
+      if (result.success) {
+        onClose();
+        window.dispatchEvent(new Event("tasks-updated"));
+      } else {
+        alert(result.error || "Erro ao deletar a tarefa.");
+      }
+    } catch (error) {
+      console.error("Erro ao excluir tarefa:", error);
+      alert("Erro inesperado ao conectar com o servidor.");
+    } finally {
+      setIsDeleting(false);
     }
   };
 
-  // 🔹 Criando o Portal para jogar o Modal direto na tag <body>
   return createPortal(
     <>
-      {/* 🔹 Z-index aumentado para 9999 para garantir sobreposição absoluta */}
       <div 
-        className="fixed inset-0 z-[9998] bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" 
+        tabIndex={-1}
+        role="button"
+        aria-label="Fechar detalhes da tarefa"
+        className="fixed inset-0 z-[9998] bg-black/60 backdrop-blur-sm animate-in fade-in duration-200 cursor-default" 
         onClick={onClose} 
+        onKeyDown={(e) => { if (e.key === "Escape") onClose(); }}
       />
 
-      <div className="fixed right-0 top-0 h-[100dvh] w-full max-w-md bg-card shadow-2xl z-[9999] flex flex-col animate-in slide-in-from-right duration-300 border-l border-border/50">
+      <aside className="fixed right-0 top-0 h-[100dvh] w-full max-w-md bg-card shadow-2xl z-[9999] flex flex-col animate-in slide-in-from-right duration-300 border-l border-border/50">
         
         {/* HEADER */}
         <div className="p-6 pb-4 border-b border-border/50 bg-muted/10 shrink-0">
@@ -134,10 +151,12 @@ export function TaskDetailsModal({
             </div>
             
             <button 
+              type="button"
               onClick={handleDelete} 
               disabled={isDeleting}
               className="text-red-500/70 hover:text-red-600 hover:bg-red-500/10 p-1.5 rounded-md transition-colors disabled:opacity-50"
               title="Deletar tarefa"
+              aria-label="Excluir tarefa"
             >
               {isDeleting ? <Loader2 size={18} className="animate-spin" /> : <Trash2 size={18} />}
             </button>
@@ -147,12 +166,17 @@ export function TaskDetailsModal({
             <h2 className="text-xl md:text-2xl font-bold text-foreground leading-tight pr-4">
               {task.title}
             </h2>
-            <button onClick={onClose} className="text-muted-foreground hover:text-foreground shrink-0 mt-1 transition-colors bg-card hover:bg-muted p-1.5 border border-border/50 rounded-md">
+            <button 
+              type="button"
+              onClick={onClose} 
+              className="text-muted-foreground hover:text-foreground shrink-0 mt-1 transition-colors bg-card hover:bg-muted p-1.5 border border-border/50 rounded-md"
+              aria-label="Fechar"
+            >
               <X size={20} />
             </button>
           </div>
 
-          {/* Chips de Informação */}
+          {/* CHIPS DE INFORMAÇÃO */}
           <div className="flex flex-wrap items-center gap-2">
             <div className={`flex items-center gap-1.5 px-2.5 py-1 text-xs font-bold rounded-full border ${currentStatus.className}`}>
               <currentStatus.Icon size={12} /> {currentStatus.label}
@@ -192,7 +216,7 @@ export function TaskDetailsModal({
             </p>
           </section>
 
-          {/* Progresso e Checklist */}
+          {/* PROGRESSO E CHECKLIST */}
           <section className="bg-card p-4 rounded-xl border border-border/50 shadow-sm">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-[11px] font-bold text-muted-foreground tracking-wider uppercase">
@@ -236,6 +260,7 @@ export function TaskDetailsModal({
         <div className="p-6 border-t border-border bg-muted/10 shrink-0">
           <div className="flex gap-3">
             <Button 
+              type="button"
               variant="outline" 
               className="flex-1 border-primary text-primary hover:bg-primary/10 font-bold h-12 rounded-xl"
               onClick={() => {
@@ -247,6 +272,7 @@ export function TaskDetailsModal({
             </Button>
 
             <Button 
+              type="button"
               className={`flex-1 font-bold h-12 rounded-xl shadow-lg shadow-primary/20 ${isBlockedByDependency ? 'opacity-50 cursor-not-allowed grayscale' : 'bg-primary text-primary-foreground hover:bg-primary/90'}`}
               onClick={handleComplete}
               disabled={isCompleting || isBlockedByDependency || task.status === "COMPLETED"}
@@ -261,7 +287,7 @@ export function TaskDetailsModal({
           </div>
         </div>
 
-      </div>
+      </aside>
     </>,
     document.body
   );

@@ -4,9 +4,9 @@ import { useTheme } from "next-themes";
 import { useEffect, useState, useCallback } from "react";
 import { Button } from "@/components/ui/Button";
 import { Globe, Circle, CheckCircle2, Monitor } from "lucide-react";
-import { salvarPreferenciasCookieAction } from "@/actions/user-actions"; // <-- Importe sua action aqui
+import { salvarPreferenciasCookieAction } from "@/actions/user-actions";
+import { usePrimaryColor } from "@/providers/ThemeProvider"; // 1. Import do hook
 
-// Cores exatas da paleta
 const ACCENT_COLORS = [
   { id: "primary", name: "Ouro", hex: "#D6A628", hover: "#B98C03" },
   { id: "secondary", name: "Cobre", hex: "#B85B33", hover: "#9B451F" },
@@ -14,7 +14,6 @@ const ACCENT_COLORS = [
   { id: "muted", name: "Cinza", hex: "#5E5E5E", hover: "#3F3F3F" },
 ];
 
-// Função utilitária para ler os cookies no Client-Side
 const getClientCookie = (name: string) => {
   if (typeof document === "undefined") return null;
   const value = `; ${document.cookie}`;
@@ -25,18 +24,21 @@ const getClientCookie = (name: string) => {
 
 export function TabAparencia() {
   const { theme, setTheme } = useTheme();
+  const { changePrimaryColor } = usePrimaryColor(); // 2. Consumo do contexto
   const [mounted, setMounted] = useState(false);
   const [activeColor, setActiveColor] = useState("primary");
   const [language, setLanguage] = useState("pt-BR");
   const [isLoading, setIsLoading] = useState(false);
 
-  // Preview dinâmico da cor: atualiza o CSS sem salvar no cookie ainda
+  // Aplica a cor via Contexto + variáveis CSS de apoio (como o hover)
   const applyColor = useCallback((colorId: string) => {
     const color = ACCENT_COLORS.find(c => c.id === colorId) || ACCENT_COLORS[0];
-    document.documentElement.style.setProperty("--color-primary", color.hex);
+    
+    changePrimaryColor(color.hex); // Atualiza o estado global e a var --color-primary
     document.documentElement.style.setProperty("--color-primary-hover", color.hover);
+    
     setActiveColor(colorId);
-  }, []);
+  }, [changePrimaryColor]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -45,10 +47,11 @@ export function TabAparencia() {
     const savedLang = getClientCookie("priowl-lang") || "pt-BR";
     setActiveColor(savedColor);
     setLanguage(savedLang);
+    
     const color = ACCENT_COLORS.find(c => c.id === savedColor) || ACCENT_COLORS[0];
-    document.documentElement.style.setProperty("--color-primary", color.hex);
+    changePrimaryColor(color.hex);
     document.documentElement.style.setProperty("--color-primary-hover", color.hover);
-  }, []);
+  }, [changePrimaryColor]);
 
   const handleLanguageChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setLanguage(e.target.value);
@@ -57,7 +60,6 @@ export function TabAparencia() {
   const handleSavePreferences = async () => {
     setIsLoading(true);
     try {
-      // Chama a Server Action para setar os cookies via servidor
       await salvarPreferenciasCookieAction({
         theme: theme || "system",
         accentColor: activeColor,
@@ -73,7 +75,6 @@ export function TabAparencia() {
   };
 
   const handleDiscard = () => {
-    // Reverte a UI baseando-se no que está consolidado nos cookies
     const savedColor = getClientCookie("priowl-accent") || "primary";
     const savedLang = getClientCookie("priowl-lang") || "pt-BR";
     const savedTheme = getClientCookie("priowl-theme") || "system";
@@ -83,7 +84,7 @@ export function TabAparencia() {
     setTheme(savedTheme);
     
     const color = ACCENT_COLORS.find(c => c.id === savedColor) || ACCENT_COLORS[0];
-    document.documentElement.style.setProperty("--color-primary", color.hex);
+    changePrimaryColor(color.hex);
     document.documentElement.style.setProperty("--color-primary-hover", color.hover);
   };
 

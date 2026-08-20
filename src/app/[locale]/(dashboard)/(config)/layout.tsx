@@ -1,7 +1,7 @@
 import SettingsHeader from "@/components/layout/SettingsHeader";
 import { getUserProfile } from "@/services/user";
 
-export default async function ConfigLayout({ children }: { children: React.ReactNode }) {
+export default async function ConfigLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   const user = await getUserProfile();
 
   return (
