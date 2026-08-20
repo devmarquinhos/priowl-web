@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { useRouter } from "next/navigation"; // 🔹 Importado o router do Next.js
+import { useRouter } from "next/navigation"; 
 import { Button } from "@/components/ui/Button";
 import { Avatar } from "@/components/ui/Avatar";
 import { atualizarPerfilAction, excluirContaAction, logoutAction } from "@/actions/user-actions";
-import { ShieldCheck, RefreshCw, LogOut, KeyRound } from "lucide-react"; // 🔹 Adicionado ícone de chave
+import { ShieldCheck, RefreshCw, LogOut, KeyRound, LayoutDashboard } from "lucide-react"; // 🔹 Adicionado LayoutDashboard
 import { UserProfileResponse } from "@/types/user";
 
 interface TabPerfilProps {
@@ -14,11 +14,13 @@ interface TabPerfilProps {
 }
 
 export function TabPerfil({ user, fallback }: Readonly<TabPerfilProps>) {
-  const router = useRouter(); // 🔹 Inicializado o router
+  const router = useRouter();
+  console.log("DADOS DO USUÁRIO:", user);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [updateFeedback, setUpdateFeedback] = useState<{ type: "success" | "error", msg: string } | null>(null);
   const [isPendingUpdate, startUpdate] = useTransition();
+
   const handleUpdateProfile = (formData: FormData) => {
     setUpdateFeedback(null);
     startUpdate(async () => {
@@ -30,13 +32,14 @@ export function TabPerfil({ user, fallback }: Readonly<TabPerfilProps>) {
       }
     });
   };
+
   const handleDeleteAccount = async () => {
     const confirmed = window.confirm("TEM CERTEZA? Esta ação é irreversível e todos os seus dados serão apagados.");
     if (!confirmed) return;
 
     setIsDeleting(true);
     await excluirContaAction();
-    setIsDeleting(false); // Só roda se falhar, pois o sucesso faz redirect
+    setIsDeleting(false); 
   };
 
   const handleLogout = async () => {
@@ -74,31 +77,46 @@ export function TabPerfil({ user, fallback }: Readonly<TabPerfilProps>) {
           </div>
         </div>
 
-        {/* Botão de Sair com lógica integrada */}
-        <Button 
-          variant="outline" 
-          onClick={handleLogout}
-          disabled={isLoggingOut}
-          className="flex shrink-0 items-center gap-2 text-muted-foreground hover:bg-muted hover:text-foreground"
-        >
-          {isLoggingOut ? (
-            <>
-              <RefreshCw size={18} className="animate-spin" />
-              Saindo...
-            </>
-          ) : (
-            <>
-              <LogOut size={18} />
-              Sair da Conta
-            </>
+        {/* 🔹 Ações do Cabeçalho (Botão Admin + Sair) */}
+        <div className="flex flex-col sm:flex-row items-center gap-3">
+          
+          {/* Só renderiza se o usuário for Admin */}
+          {user?.isAdmin === true && (
+            <Button 
+              onClick={() => router.push("/admin/dashboard")} // Ajuste a rota de acordo com o seu locale (ex: /pt/admin/dashboard) se necessário
+              className="flex w-full sm:w-auto shrink-0 items-center gap-2 bg-[#8c6b23] hover:bg-[#7a5c1e] text-white transition-colors"
+            >
+              <LayoutDashboard size={18} />
+              Acessar Painel Admin
+            </Button>
           )}
-        </Button>
+
+          {/* Botão de Sair com lógica integrada */}
+          <Button 
+            variant="outline" 
+            onClick={handleLogout}
+            disabled={isLoggingOut}
+            className="flex w-full sm:w-auto shrink-0 items-center justify-center gap-2 text-muted-foreground hover:bg-muted hover:text-foreground"
+          >
+            {isLoggingOut ? (
+              <>
+                <RefreshCw size={18} className="animate-spin" />
+                Saindo...
+              </>
+            ) : (
+              <>
+                <LogOut size={18} />
+                Sair da Conta
+              </>
+            )}
+          </Button>
+        </div>
       </div>
 
       {/* Grid de Formulários */}
       <div className="grid gap-6 md:grid-cols-2">
         
-        {/* Dados Pessoais (Agora Funcional) */}
+        {/* Dados Pessoais */}
         <div className="rounded-xl border border-border bg-card p-6 shadow-sm">
           <h3 className="mb-6 text-lg font-bold text-foreground">Dados Pessoais</h3>
           
@@ -159,7 +177,6 @@ export function TabPerfil({ user, fallback }: Readonly<TabPerfilProps>) {
               Você será redirecionado para uma tela segura onde poderá definir sua nova senha.
             </p>
             
-            {/* 🔹 Botão refatorado para redirecionamento */}
             <Button 
               onClick={() => router.push("/change-password")} 
               className="flex w-full items-center justify-center gap-2 bg-foreground py-6 text-base font-medium text-background hover:opacity-90 transition-opacity"
