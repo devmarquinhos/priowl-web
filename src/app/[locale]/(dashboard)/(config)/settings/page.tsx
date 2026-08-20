@@ -7,9 +7,9 @@ import { TabSuporte } from "./_components/TabSuporte";
 
 export default async function ConfiguracoesPage({
   searchParams,
-}: {
+}: Readonly<{
   searchParams: Promise<{ aba?: string }>;
-}) {
+}>) {
   const user = await getUserProfile();
   const fallback = user?.username ? user.username.substring(0, 2).toUpperCase() : "US";
 

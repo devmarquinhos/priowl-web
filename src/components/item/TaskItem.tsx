@@ -9,14 +9,13 @@ import type { CategoryResponse } from "@/actions/category-actions";
 
 import { TaskDetailsModal } from "@/components/modals/TaskDetailsModal";
 import { TaskModal } from "@/components/modals/TaskModal";
-import { analyzeTaskDeadlines } from "@/services/deadline"; // 🔹 Import do serviço de prazos
+import { analyzeTaskDeadlines } from "@/services/deadline";
 
 interface ProgressRingProps {
   readonly progress: number;
   readonly colorClass?: string;
 }
 
-// 🔹 Anel de progresso
 function ProgressRing({ progress, colorClass = "text-primary" }: ProgressRingProps) {
   const radius = 16;
   const circumference = radius * 2 * Math.PI;
@@ -54,12 +53,10 @@ export function TaskItem({ task, isCritical = false, categories, allTasks }: Tas
   
   const parentTask = allTasks?.find(t => t.id === task.parentTaskId);
   const isBlockedByDependency = !!task.parentTaskId && parentTask?.status !== "COMPLETED";
-  
-  // 🔹 ANÁLISE DE PRAZOS (Adaptando o TaskResponse para o formato esperado pelo serviço se necessário)
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [analyzedTask] = analyzeTaskDeadlines([{ ...task, dueDate: task.deadline } as any]);
 
-  // Se a tarefa for crítica (importance === 5), garantimos a borda vermelha, caso contrário, usamos a do analisador
   const borderClass = isCritical ? "border-red-500" : (analyzedTask?.borderClass ?? "border-border");
   const badgeClass = analyzedTask?.badgeClass ?? "bg-muted text-muted-foreground border-border";
   const timeLeftText = analyzedTask?.timeLeftText ?? "Sem prazo";
@@ -67,11 +64,11 @@ export function TaskItem({ task, isCritical = false, categories, allTasks }: Tas
   const categoryName = categories?.find(c => c.id === task.categoryId)?.title;
   const ringColor = isCritical || borderClass.includes("red") ? "text-red-500" : "text-primary";
   
-  // 🔹 Formatação da data 
   const formattedDeadline = task.deadline 
     ? new Intl.DateTimeFormat('pt-BR', { day: '2-digit', month: 'short', timeZone: 'UTC' }).format(new Date(task.deadline))
     : null;
 
+  // 🔹 AÇÃO RÁPIDA: CONCLUIR TAREFA
   const handleQuickComplete = async (e: React.MouseEvent) => {
     e.stopPropagation(); 
     
@@ -121,7 +118,6 @@ export function TaskItem({ task, isCritical = false, categories, allTasks }: Tas
           <ProgressRing progress={task.branchProgress || 0} colorClass={ringColor} />
           
           <div className="flex flex-col truncate">
-            {/* Título e Categoria */}
             <div className="flex items-center gap-2 mb-0.5">
               <h3 className="font-bold text-foreground text-sm truncate">{task.title}</h3>
               
@@ -140,10 +136,8 @@ export function TaskItem({ task, isCritical = false, categories, allTasks }: Tas
           </div>
         </div>
 
-        {/* 🔹 Container da Direita: Status do Prazo + Botões de ação */}
+        {/* Container da Direita */}
         <div className="flex items-center gap-3 ml-2 shrink-0">
-          
-          {/* 🔹 Exibição Integrada do Analisador de Prazos */}
           {task.deadline && (
             <div className="flex flex-col items-end justify-center gap-1">
               <span className={`px-2 py-0.5 text-[9px] font-bold uppercase rounded-full border ${badgeClass} shrink-0 leading-none`}>
@@ -186,7 +180,6 @@ export function TaskItem({ task, isCritical = false, categories, allTasks }: Tas
         </div>
       </div>
 
-      {/* Modais mantidos intactos */}
       {isDetailsOpen && (
         <TaskDetailsModal 
           isOpen={isDetailsOpen}

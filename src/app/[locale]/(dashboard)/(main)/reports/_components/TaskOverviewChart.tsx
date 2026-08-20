@@ -7,11 +7,10 @@ export function TaskOverviewChart({ tasks }: { readonly tasks: TaskResponse[] })
   const last7Days = Array.from({ length: 7 }).map((_, i) => {
     const d = new Date();
     d.setDate(d.getDate() - (6 - i)); // Do 6º dia atrás até hoje (0)
-    
-    // Converte para YYYY-MM-DD para bater com o formato que vem do banco
-    const dateString = d.toISOString().split('T')[0];
-    
-    // Pega a sigla do dia da semana (ex: 'seg', 'ter') e formata
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    const dateString = `${year}-${month}-${day}`;
     const dayName = d.toLocaleDateString('pt-BR', { weekday: 'short' }).toUpperCase().replace('.', '');
     
     return { dateString, dayName };
@@ -32,6 +31,7 @@ export function TaskOverviewChart({ tasks }: { readonly tasks: TaskResponse[] })
   const totalScheduled = chartData.reduce((acc, curr) => acc + curr.scheduled, 0);
   const totalCompleted = chartData.reduce((acc, curr) => acc + curr.completed, 0);
   const efficiencyRate = totalScheduled > 0 ? Math.round((totalCompleted / totalScheduled) * 100) : 0;
+  const noDeadlineCount = tasks.filter(t => !t.deadline).length;
 
   return (
     <div className="xl:col-span-2 rounded-lg border border-border bg-card p-5 shadow-sm flex flex-col justify-between min-h-[320px]">
@@ -101,11 +101,20 @@ export function TaskOverviewChart({ tasks }: { readonly tasks: TaskResponse[] })
       </div>
 
       {/* ================= RODAPÉ ================= */}
-      <div className="flex items-center justify-between pt-4 mt-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-        <div className="flex items-center gap-3">
-          <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-primary"></span> Concluídas ({totalCompleted})</span>
-          <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-orange-300/80"></span> Previstas ({totalScheduled})</span>
+      <div className="flex flex-col gap-3 pt-4 mt-2">
+        <div className="flex items-center justify-between text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+          <div className="flex items-center gap-3">
+            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-primary"></span> Concluídas ({totalCompleted})</span>
+            <span className="flex items-center gap-1.5"><span className="w-2 h-2 rounded-full bg-orange-300/80"></span> Previstas ({totalScheduled})</span>
+          </div>
         </div>
+
+        {/* 🔹 NOVO AVISO: Só aparece se houver tarefas sem prazo */}
+        {noDeadlineCount > 0 && (
+          <div className="bg-muted/40 border border-border/50 rounded-md p-2 text-[10px] text-muted-foreground text-center">
+            * Há <strong>{noDeadlineCount}</strong> {noDeadlineCount === 1 ? 'tarefa sem prazo definido, que não é contabilizada' : 'tarefas sem prazo definido, que não são contabilizadas'} neste gráfico.
+          </div>
+        )}
       </div>
 
     </div>

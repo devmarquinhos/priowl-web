@@ -1,7 +1,7 @@
 "use server";
 
 import { cookies } from "next/headers";
-import { revalidateTag } from "next/cache";
+import { revalidateTag, revalidatePath } from "next/cache";
 
 const API_URL = process.env.BACKEND_URL || "http://localhost:8080/api";
 const TOKEN_COOKIE_NAME = "priowl_token";
@@ -35,8 +35,8 @@ export interface TaskInput {
   status?: "PENDING" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED" | (string & {});
   importance: number;
   deadline?: string;
-  categoryId?: number;
-  parentTaskId?: number;
+categoryId?: number | null;
+  parentTaskId?: number | null;
 }
 
 export interface DashboardResponse {
@@ -79,7 +79,8 @@ export async function getTasksAction(): Promise<TaskResponse[]> {
     const response = await fetch(`${API_URL}/tasks`, {
       method: "GET",
       headers: { Authorization: `Bearer ${token}` },
-      next: { tags: ["user-tasks"] }
+      next: { tags: ["user-tasks"] },
+      cache: "no-store"
     });
     if (!response.ok) return [];
     return await response.json();
@@ -165,8 +166,11 @@ export async function createTaskAction(data: TaskInput) {
       const errorMsg = await extractErrorMessage(response, "Falha ao criar tarefa");
       return { success: false, error: errorMsg };
     }
-    // @ts-expect-error - Next.js internal revalidateTag typings bug
-    revalidateTag("user-tasks"); 
+    
+    // @ts-expect-error - Bug de tipagem interno da d.ts do Next.js para revalidateTag
+    revalidateTag("user-tasks");
+    revalidatePath("/", "layout"); 
+    
     return { success: true, data: await response.json() };
   } catch (error) {
     console.error("Erro ao criar tarefa:", error);
@@ -198,7 +202,7 @@ export async function updateTaskAction(id: number, data: Partial<TaskInput>) {
       deadline: currentTask.deadline,
       categoryId: currentTask.categoryId,
       parentTaskId: currentTask.parentTaskId,
-      ...data
+      ...data,
     };
 
     const response = await fetch(`${API_URL}/tasks/${id}`, {
@@ -215,8 +219,9 @@ export async function updateTaskAction(id: number, data: Partial<TaskInput>) {
       return { success: false, error: errorMsg };
     }
 
-    // @ts-expect-error - Next.js internal revalidateTag typings bug
+    // @ts-expect-error - Bug de tipagem interno da d.ts do Next.js para revalidateTag
     revalidateTag("user-tasks");
+    revalidatePath("/", "layout");
     return { success: true, data: await response.json() };
   } catch (error) {
     console.error("Erro ao atualizar tarefa:", error);
@@ -239,7 +244,7 @@ export async function deleteTaskAction(id: number) {
       return { success: false, error: errorMsg };
     }
 
-    // @ts-expect-error - Next.js internal revalidateTag typings bug
+    // @ts-expect-error - Bug de tipagem interno da d.ts do Next.js para revalidateTag
     revalidateTag("user-tasks");
     return { success: true };
   } catch (error) {
@@ -285,7 +290,7 @@ export async function addDependencyAction(taskId: number, blockingId: number) {
       return { success: false, error: errorMsg };
     }
 
-    // @ts-expect-error - Next.js internal revalidateTag typings bug
+    // @ts-expect-error - Bug de tipagem interno da d.ts do Next.js para revalidateTag
     revalidateTag("user-tasks");
     return { success: true };
   } catch (error) {
@@ -309,7 +314,7 @@ export async function removeDependencyAction(taskId: number, blockingId: number)
       return { success: false, error: errorMsg };
     }
 
-    // @ts-expect-error - Next.js internal revalidateTag typings bug
+    // @ts-expect-error - Bug de tipagem interno da d.ts do Next.js para revalidateTag
     revalidateTag("user-tasks");
     return { success: true };
   } catch (error) {

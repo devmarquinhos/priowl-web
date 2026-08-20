@@ -35,6 +35,7 @@ export default async function RootLayout({
 
   const messages = await getMessages();
 
+  // O Servidor lê o cookie
   const cookieStore = await cookies();
   const savedColorId = cookieStore.get("priowl-accent")?.value || "primary";
   const activeColor = ACCENT_COLORS.find(c => c.id === savedColorId) || ACCENT_COLORS[0];
@@ -50,7 +51,8 @@ export default async function RootLayout({
     >
       <body className="antialiased min-h-screen bg-background text-foreground transition-colors duration-200">
         <NextIntlClientProvider messages={messages}>
-          <ThemeProvider>
+          {/* Passamos o hex inicial como propriedade para o Provider */}
+          <ThemeProvider initialColorHex={activeColor.hex}>
             {children}
           </ThemeProvider>
         </NextIntlClientProvider>

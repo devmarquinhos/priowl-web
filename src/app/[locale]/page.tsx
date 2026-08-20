@@ -1,5 +1,6 @@
 import { useTranslations } from "next-intl";
 import Link from "next/link";
+import Image from "next/image";
 import { Button } from "../../components/ui/Button";
 
 export default function Home() {
@@ -31,9 +32,13 @@ export default function Home() {
           {/* Esquerda: Logo */}
           <div className="flex items-center">
             <Link href="/" className="text-xl font-bold flex items-center gap-2">
-              <div className="w-7 h-7 bg-[#8A6727] rounded flex items-center justify-center">
-                <span className="w-2.5 h-3.5 bg-white rounded-sm inline-block relative after:content-[''] after:absolute after:w-1 after:h-1 after:bg-[#8A6727] after:rounded-full after:top-1 after:left-1" aria-hidden="true" />
-              </div>
+                <Image 
+                  src="logo-1.svg" 
+                  alt="Logo Priowl" 
+                  width={32} 
+                  height={32} 
+                  className="rounded"
+                />
               <span className="tracking-tight text-[#8A6727]">Priowl</span>
             </Link>
           </div>
@@ -225,9 +230,13 @@ export default function Home() {
             {/* Coluna 1: Logo e Slogan */}
             <div className="col-span-1 md:col-span-1">
               <Link href="/" className="text-xl font-bold flex items-center gap-2 mb-4">
-                <div className="w-7 h-7 bg-[#8A6727] rounded flex items-center justify-center">
-                  <span className="w-2.5 h-3.5 bg-white rounded-sm inline-block relative after:content-[''] after:absolute after:w-1 after:h-1 after:bg-[#8A6727] after:rounded-full after:top-1 after:left-1" aria-hidden="true" />
-                </div>
+                <Image 
+                  src="logo-1.svg" 
+                  alt="Logo Priowl" 
+                  width={80} 
+                  height={80} 
+                  className="rounded"
+                />
                 <span className="tracking-tight text-[#8A6727]">Priowl</span>
               </Link>
               <p className="text-xs font-medium text-[#5E5E5E] leading-relaxed pr-4">

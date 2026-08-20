@@ -1,7 +1,7 @@
 "use server";
 
 import { cookies } from "next/headers";
-import { revalidateTag } from "next/cache";
+import { revalidateTag, revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { SubscriptionResponse, PlanResponse } from "@/types/subscription";
 import { UserProfileResponse } from "@/types/user";
@@ -110,7 +110,7 @@ export async function atualizarPerfilAction(formData: FormData) {
 
     // @ts-expect-error - Bug de tipagem interno do Next.js
     revalidateTag("user-profile");
-    
+    revalidatePath("/", "layout");
     // Retorno de sucesso para o formulário
     return { success: "Perfil atualizado com sucesso!" };
     
