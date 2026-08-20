@@ -1,9 +1,8 @@
 "use client";
 
 import { ThemeProvider as NextThemesProvider, type ThemeProviderProps as NextThemesProviderProps } from "next-themes";
-import { createContext, useContext, useState, useMemo } from "react";
+import { createContext, useContext, useState, useMemo, useEffect, useCallback } from "react";
 
-// Adicionamos a propriedade initialColorHex
 interface ThemeProviderProps extends Omit<NextThemesProviderProps, "children"> {
   readonly children: React.ReactNode;
   readonly initialColorHex?: string; 
@@ -21,20 +20,22 @@ export function ThemeProvider({
   initialColorHex = "#D6A628",
   ...props 
 }: Readonly<ThemeProviderProps>) {
-  
   const [primaryColor, setPrimaryColor] = useState(initialColorHex);
 
-  const changePrimaryColor = (color: string) => {
+  useEffect(() => {
+    document.documentElement.style.setProperty("--color-primary", primaryColor);
+  }, [primaryColor]);
+
+  const changePrimaryColor = useCallback((color: string) => {
     setPrimaryColor(color);
-    document.documentElement.style.setProperty("--color-primary", color);
-  };
+  }, []);
 
   const colorContextValue = useMemo(
     () => ({
       primaryColor,
       changePrimaryColor,
     }),
-    [primaryColor]
+    [primaryColor, changePrimaryColor]
   );
 
   return (
