@@ -18,8 +18,10 @@ export default function DeadlineToast({ userTasks }: Readonly<DeadlineToastProps
   if (isDismissed || urgentTasks.length === 0) return null;
 
   return (
-    <div className="fixed bottom-5 right-5 z-50 max-w-sm w-full bg-white rounded-2xl shadow-2xl border border-gray-100 overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-300">
-      <div className="bg-[#735613] px-4 py-3 text-white flex items-center justify-between">
+    <div className="fixed bottom-5 right-5 z-50 max-w-sm w-full bg-card rounded-2xl shadow-2xl border border-border overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-300">
+      
+      {/* 🔹 Cabeçalho atualizado para usar a cor primária do tema */}
+      <div className="bg-primary px-4 py-3 text-primary-foreground flex items-center justify-between">
         <div className="flex items-center gap-2">
           <Bell size={18} />
           <span className="font-bold text-sm">Alertas de Prazo</span>
@@ -27,7 +29,7 @@ export default function DeadlineToast({ userTasks }: Readonly<DeadlineToastProps
         <button
           type="button"
           onClick={() => setIsDismissed(true)}
-          className="text-white/80 hover:text-white p-1 transition-colors"
+          className="text-primary-foreground/80 hover:text-primary-foreground p-1 transition-colors"
         >
           <X size={16} />
         </button>
@@ -37,11 +39,14 @@ export default function DeadlineToast({ userTasks }: Readonly<DeadlineToastProps
         {urgentTasks.map((task) => (
           <div
             key={task.id}
-            className={`p-3 bg-gray-50 rounded-xl border-l-4 ${task.borderClass} flex items-center justify-between gap-3`}
+            className={`p-3 bg-background rounded-xl border-l-4 ${task.borderClass} flex items-center justify-between gap-3`}
           >
             <div className="min-w-0 flex-1">
-              <p className="text-xs font-bold text-gray-900 truncate">{task.title}</p>
-              <div className="flex items-center gap-1 mt-1 text-[11px] text-gray-500">
+              {/* 🔹 Atualizado para text-foreground */}
+              <p className="text-xs font-bold text-foreground truncate">{task.title}</p>
+              
+              {/* 🔹 Atualizado para text-muted-foreground */}
+              <div className="flex items-center gap-1 mt-1 text-[11px] text-muted-foreground">
                 <Clock size={12} />
                 <span>
                   {new Date(task.dueDate).toLocaleTimeString("pt-BR", {

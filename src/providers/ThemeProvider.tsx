@@ -1,10 +1,12 @@
 "use client";
 
 import { ThemeProvider as NextThemesProvider, type ThemeProviderProps as NextThemesProviderProps } from "next-themes";
-import { createContext, useContext, useEffect, useState, useMemo } from "react";
+import { createContext, useContext, useState, useMemo } from "react";
 
+// Adicionamos a propriedade initialColorHex
 interface ThemeProviderProps extends Omit<NextThemesProviderProps, "children"> {
   readonly children: React.ReactNode;
+  readonly initialColorHex?: string; 
 }
 
 interface ColorContextType {
@@ -14,21 +16,16 @@ interface ColorContextType {
 
 const ColorContext = createContext<ColorContextType | undefined>(undefined);
 
-export function ThemeProvider({ children, ...props }: Readonly<ThemeProviderProps>) {
-  const [primaryColor, setPrimaryColor] = useState("#d4af37");
-
-  useEffect(() => {
-    const savedColor = localStorage.getItem("priowl-primary-color");
-    if (savedColor) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setPrimaryColor(savedColor);
-      document.documentElement.style.setProperty("--color-primary", savedColor);
-    }
-  }, []);
+export function ThemeProvider({ 
+  children, 
+  initialColorHex = "#D6A628",
+  ...props 
+}: Readonly<ThemeProviderProps>) {
+  
+  const [primaryColor, setPrimaryColor] = useState(initialColorHex);
 
   const changePrimaryColor = (color: string) => {
     setPrimaryColor(color);
-    localStorage.setItem("priowl-primary-color", color);
     document.documentElement.style.setProperty("--color-primary", color);
   };
 

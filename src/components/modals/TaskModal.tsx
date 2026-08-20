@@ -1,14 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { 
-  X, Trash2, Pin, Calendar, Link as LinkIcon, 
+  X, Trash2, Calendar, Link as LinkIcon, 
   Plus, Info, Edit3, Shield, CheckCircle2,
   Check, Loader2
 } from "lucide-react";
 import type { TaskResponse, SubTaskResponse } from "@/actions/task-actions";
 import type { CategoryResponse } from "@/actions/category-actions";
-import { createTaskAction, updateTaskAction } from "@/actions/task-actions";
+import { createTaskAction, updateTaskAction, deleteTaskAction } from "@/actions/task-actions";
 
 interface TaskModalProps {
   readonly isOpen: boolean;
@@ -16,6 +17,7 @@ interface TaskModalProps {
   readonly task?: TaskResponse | null; 
   readonly categories?: CategoryResponse[];
   readonly allTasks?: TaskResponse[];
+  readonly onDelete?: (taskId: number) => Promise<void>;
 }
 
 const initialFormState = {
@@ -46,13 +48,15 @@ export function TaskModal({
   onClose, 
   task = null, 
   categories = [], 
-  allTasks = [] 
+  allTasks = [],
+  onDelete
 }: TaskModalProps) {
-  
+  const router = useRouter();
   const [formData, setFormData] = useState(() => getInitialFormData(task));
   const [subtasks, setSubtasks] = useState<SubTaskResponse[]>(() => task?.subtasks || []);
   
   const [isSaving, setIsSaving] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const [prevIsOpen, setPrevIsOpen] = useState(isOpen);
   const [prevTask, setPrevTask] = useState(task);
@@ -72,23 +76,45 @@ export function TaskModal({
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleDelete = async () => {
+    if (!task?.id) return;
+    if (!confirm("Tem certeza que deseja excluir esta tarefa de forma permanente?")) return;
+
+    setIsDeleting(true);
+    try {
+      const result = await deleteTaskAction(task.id);
+
+      
+      if (result.success) {
+        if (onDelete) await onDelete(task.id);
+        window.dispatchEvent(new Event("tasks-updated"));
+        onClose();
+      } else {
+        alert(result.error || "Não foi possível excluir a tarefa.");
+      }
+    } catch (error) {
+      console.error("Erro ao excluir tarefa:", error);
+      alert("Erro inesperado ao conectar com o servidor.");
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSaving(true);
 
     try {
       const payload = {
-        title: formData.title,
-        status: formData.status,
-        description: formData.description,
-        categoryId: formData.categoryId === "" ? undefined : Number(formData.categoryId),
-        importance: Number(formData.importance),
-        deadline: formData.deadline ? `${formData.deadline}T00:00:00Z` : undefined,
-        parentTaskId: formData.parentTaskId === "" ? undefined : Number(formData.parentTaskId),
-        subtaskIds: subtasks.map(st => st.id) 
-      };
-
-      console.log("Enviando dados para a API:", payload);
+      title: formData.title,
+      status: formData.status,
+      description: formData.description,
+      categoryId: formData.categoryId === "" ? null : Number(formData.categoryId),
+      importance: Number(formData.importance),
+      deadline: formData.deadline ? `${formData.deadline}T00:00:00Z` : undefined,
+      parentTaskId: formData.parentTaskId === "" ? null : Number(formData.parentTaskId),
+      subtaskIds: subtasks.map(st => st.id)
+    };
 
       let result;
       
@@ -99,8 +125,9 @@ export function TaskModal({
       }
 
       if (result.success) {
-        console.log("Salvo com sucesso!");
         onClose(); 
+        window.dispatchEvent(new Event("tasks-updated"));
+        router.refresh();
       } else {
         console.error("Erro da API:", result.error);
         alert(result.error || "Ocorreu um erro ao salvar a tarefa.");
@@ -115,7 +142,6 @@ export function TaskModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6">
-      
       <button 
         type="button"
         className="absolute inset-0 w-full h-full bg-black/40 backdrop-blur-sm animate-in fade-in duration-200 cursor-default focus:outline-none"
@@ -127,7 +153,6 @@ export function TaskModal({
         onSubmit={handleSave}
         className="relative w-full max-w-3xl bg-card border border-border/50 rounded-2xl shadow-2xl flex flex-col max-h-[95vh] sm:max-h-[90vh] animate-in zoom-in-95 duration-200 overflow-hidden"
       >
-        
         {/* HEADER */}
         <div className="flex flex-col gap-4 p-6 border-b border-border/50 bg-card/50">
           <div className="flex items-start justify-between gap-4">
@@ -145,15 +170,26 @@ export function TaskModal({
             </div>
             <div className="flex items-center gap-2 text-muted-foreground shrink-0 bg-muted/50 p-1.5 rounded-lg border border-border/50">
               {task && (
-                <button type="button" className="p-1.5 rounded-md hover:bg-red-500/10 hover:text-red-500 transition-colors" aria-label="Excluir">
+                <button 
+                  type="button" 
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                  className="p-1.5 rounded-md hover:bg-red-500/10 hover:text-red-500 transition-colors disabled:opacity-50" 
+                  title="Excluir tarefa"
+                  aria-label="Excluir"
+                >
                   <Trash2 size={18} />
                 </button>
               )}
-              <button type="button" className="p-1.5 rounded-md hover:bg-primary/10 hover:text-primary transition-colors" aria-label="Fixar">
-                <Pin size={18} />
-              </button>
-              <div className="w-px h-5 bg-border mx-1"></div>
-              <button type="button" onClick={onClose} className="p-1.5 rounded-md hover:bg-muted hover:text-foreground transition-colors" aria-label="Fechar">
+
+              <div className="w-px h-5 bg-border mx-1" />
+              
+              <button 
+                type="button" 
+                onClick={onClose} 
+                className="p-1.5 rounded-md hover:bg-muted hover:text-foreground transition-colors" 
+                aria-label="Fechar"
+              >
                 <X size={18} />
               </button>
             </div>
@@ -162,7 +198,6 @@ export function TaskModal({
 
         {/* CORPO DO FORMULÁRIO */}
         <div className="flex-1 overflow-y-auto p-6 space-y-8 bg-background/50">
-          
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             
             <div className="space-y-1.5">
@@ -451,12 +486,11 @@ function ListChecksIcon(props: Readonly<React.SVGProps<SVGSVGElement>>) {
 }
 
 function StatusBadge({ status }: Readonly<{ status: string }>) {
-  // Configurações idênticas as do TaskDetailsModal para manter consistência
   const styles: Record<string, string> = {
-    "COMPLETED": "bg-green-500/10 text-green-600 border-green-500/20",
-    "IN_PROGRESS": "bg-yellow-500/10 text-yellow-600 border-yellow-500/20",
+    "COMPLETED": "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
+    "IN_PROGRESS": "bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/20",
     "PENDING": "bg-muted text-muted-foreground border-border",
-    "CANCELLED": "bg-red-500/10 text-red-600 border-red-500/20",
+    "CANCELLED": "bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/20",
   };
 
   const labels: Record<string, string> = {

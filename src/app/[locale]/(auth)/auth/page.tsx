@@ -3,6 +3,7 @@
 import React, { useState, Suspense } from "react";
 import { useSearchParams, useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 
 const API_BASE_URL = process.env.BACKEND_URL || "http://localhost:8080";
 
@@ -119,9 +120,13 @@ function AuthContent() {
         <div className="w-full max-w-[380px]">
           
           <div className="flex flex-col items-center text-center mb-6">
-            <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor" className="mb-1 text-[#121212]" xmlns="http://www.w3.org/2000/svg">
-              <path d="M21.58 3.51 c -1.39 -1.3 -4.23 -.93 -6.6 .7 c -1.12 .77 -2.07 1.69 -2.73 2.5 c -3.08 1.4 -5.26 3.6 -6.19 6.22 c -1.22 3.42 -.51 7.21 .36 8.52 c .29 .43 .92 .51 1.25 .18 l 3.15 -3.15 c .31 -.31 .76 -.36 1.12 -.13 l .87 .52 c .36 .21 .84 .18 1.16 -.09 l 1.86 -1.57 c .32 -.27 .42 -.72 .23 -1.1 l -.81 -1.63 c -.17 -.34 -.14 -.76 .08 -1.07 l 1.7 -2.42 c .26 -.37 .76 -.5 1.18 -.3 l 1.86 .87 c .36 .17 .79 .1 .1 .06 -.21 l 2.42 -2.1 c .31 -.27 .42 -.71 .26 -1.09 l -1.01 -2.44 c -.16 -.39 -.08 -.84 .2 -1.16 l 2.13 -2.4 c .56 -.63 .95 -1.55 .93 -2.43 c -.01 -.73 -.24 -1.35 -.61 -1.72 z" />
-            </svg>
+            <Image 
+                  src="feather-1.svg" 
+                  alt="Logo Priowl" 
+                  width={28} 
+                  height={28} 
+                  className="rounded"
+                />
             <h1 className="text-3xl font-bold tracking-tight mb-2">Priowl</h1>
                       
             <h2 className="text-lg font-semibold">
@@ -271,21 +276,13 @@ function AuthContent() {
         <div className="absolute inset-0 opacity-20 pointer-events-none" style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg width='120' height='120' viewBox='0 0 120 120' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M35 15c-3 5-8 10-15 12 2-5 3-10 1-15 8 2 12-2 14 3zm60 60c-3 5-8 10-15 12 2-5 3-10 1-15 8 2 12-2 14 3z' fill='%23000000' fill-rule='evenodd'/%3E%3C/svg%3E")`, backgroundSize: '120px 120px' }}></div>
         
         <div className="absolute inset-0 flex items-center justify-center z-10 pointer-events-none">
-          <svg width="180" height="180" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg" className="drop-shadow-xl text-black">
-             <path d="M30 40 Q 50 30 70 40 L 75 25 Q 70 30 65 28 Q 50 20 35 28 Q 30 30 25 25 Z" fill="currentColor"/>
-             <path d="M30 40 C 30 60 45 65 50 70 C 55 65 70 60 70 40 C 65 45 55 45 50 40 C 45 45 35 45 30 40 Z" fill="currentColor"/>
-             <circle cx="42" cy="48" r="4" fill="white"/>
-             <circle cx="58" cy="48" r="4" fill="white"/>
-             <circle cx="42" cy="48" r="1.5" fill="currentColor"/>
-             <circle cx="58" cy="48" r="1.5" fill="currentColor"/>
-             <path d="M50 52 L 47 57 L 53 57 Z" fill="white"/>
-             <path d="M50 75 L 25 60 L 35 85 L 50 95 L 65 85 L 75 60 Z" fill="currentColor"/>
-             <path d="M50 78 L 32 67 L 38 82 L 50 90 L 62 82 L 68 67 Z" fill="none" stroke="white" strokeWidth="2.5"/>
-             <line x1="38" y1="71" x2="46" y2="76" stroke="white" strokeWidth="2"/>
-             <line x1="40" y1="76" x2="48" y2="81" stroke="white" strokeWidth="2"/>
-             <line x1="62" y1="71" x2="54" y2="76" stroke="white" strokeWidth="2"/>
-             <line x1="60" y1="76" x2="52" y2="81" stroke="white" strokeWidth="2"/>
-          </svg>
+          <Image 
+                  src="logo-1.svg" 
+                  alt="Logo Priowl" 
+                  width={200} 
+                  height={200} 
+                  className="rounded"
+                />
         </div>
       </div>
       

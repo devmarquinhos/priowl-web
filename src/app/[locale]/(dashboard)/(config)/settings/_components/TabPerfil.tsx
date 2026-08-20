@@ -67,9 +67,6 @@ export function TabPerfil({ user, fallback }: Readonly<TabPerfilProps>) {
             </h2>
             <p className="text-sm text-muted">Membro desde Outubro 2023 • São Paulo, Brasil</p>
             <div className="mt-3 flex gap-2">
-              <span className="rounded-full bg-secondary px-3 py-1 text-xs font-semibold text-white">
-                PREMIUM
-              </span>
               <span className="rounded-full bg-background border border-border px-3 py-1 text-xs font-medium text-foreground">
                 {user?.isAdmin === true ? "Administrador" : "Gestor de Projetos"}
               </span>
