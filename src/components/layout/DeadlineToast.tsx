@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { Clock, X, Bell } from "lucide-react";
-import { analyzeTaskDeadlines, Task } from "@/services/deadline";
+import { analyzeTaskDeadlines } from "@/services/deadline";
+import { Task } from "@/types/task";
 
 interface DeadlineToastProps {
   readonly userTasks: readonly Task[];

@@ -2,19 +2,24 @@ import React from "react";
 import MainHeader from "@/components/layout/MainHeader";
 import DeadlineToast from "@/components/layout/DeadlineToast";
 import { getUserProfile } from "@/services/user";
-import { getTasksAction } from "@/actions/task-actions"; // 🔹 Nome da função atualizado!
+import { getTasksAction } from "@/actions/task-actions";
 
 export default async function MainLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  // 🔹 Busca o perfil e as tarefas. 
-  // Como o seu getTasksAction agora retorna direto o array, fica muito mais limpo!
   const [user, tasks] = await Promise.all([
     getUserProfile(),
     getTasksAction(), 
   ]);
+
+  // 🔹 Fazemos um "de/para" garantindo que o campo 'dueDate' exista
+  // para não quebrar a interface antiga do DeadlineToast
+  const mappedTasks = (tasks || []).map(task => ({
+    ...task,
+    dueDate: task.deadline || "", // Clona o valor de deadline para dueDate
+  }));
 
   return (
     <div className="relative flex flex-1 flex-col overflow-hidden bg-background text-foreground">
@@ -27,9 +32,10 @@ export default async function MainLayout({
         {children}
       </main>
 
-      {/* 🔹 Toast Global de Prazos */}
-      {/* Passamos 'tasks || []' como precaução de fallback */}
-      <DeadlineToast userTasks={tasks || []} />
+      {/* 🔹 Toast Global de Prazos recebendo a lista mapeada */}
+      {/* Ignoramos temporariamente tipagens restritas adicionais caso a interface Task seja muito diferente */}
+      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+      <DeadlineToast userTasks={mappedTasks as any} />
       
     </div>
   );
