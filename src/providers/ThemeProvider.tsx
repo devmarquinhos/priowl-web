@@ -1,7 +1,7 @@
 "use client";
 
 import { ThemeProvider as NextThemesProvider, type ThemeProviderProps as NextThemesProviderProps } from "next-themes";
-import { createContext, useContext, useState, useMemo, useEffect } from "react";
+import { createContext, useContext, useState, useMemo, useEffect, useCallback } from "react";
 
 interface ThemeProviderProps extends Omit<NextThemesProviderProps, "children"> {
   readonly children: React.ReactNode;
@@ -21,26 +21,21 @@ export function ThemeProvider({
   ...props 
 }: Readonly<ThemeProviderProps>) {
   const [primaryColor, setPrimaryColor] = useState(initialColorHex);
-  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    setMounted(true);
-    document.documentElement.style.setProperty("--color-primary", initialColorHex);
-  }, [initialColorHex]);
+    document.documentElement.style.setProperty("--color-primary", primaryColor);
+  }, [primaryColor]);
 
-  const changePrimaryColor = (color: string) => {
+  const changePrimaryColor = useCallback((color: string) => {
     setPrimaryColor(color);
-    if (typeof window !== "undefined") {
-      document.documentElement.style.setProperty("--color-primary", color);
-    }
-  };
+  }, []);
 
   const colorContextValue = useMemo(
     () => ({
       primaryColor,
       changePrimaryColor,
     }),
-    [primaryColor]
+    [primaryColor, changePrimaryColor]
   );
 
   return (
