@@ -1,0 +1,33 @@
+{
+  "Landing": {
+    "nav_sobre": "About",
+    "nav_funcionalidades": "Features",
+    "nav_precos": "Pricing/Plans",
+    "nav_docs": "Docs",
+    "btn_entrar": "Log In",
+    "btn_cadastrar": "Sign Up",
+    "hero_title": "Everything you need\nto manage tasks",
+    "hero_subtitle": "Priowl is your personal compendium for organizing, categorizing, and\ntracking your tasks efficiently at every stage of your\nworkflow.",
+    "btn_comecar": "Get Started for Free",
+    "btn_planos": "Explore Plans",
+    "link_corporativo": "Corporate needs? Talk to our team",
+    "feat1_tag": "#1 To-Do List App",
+    "feat1_title": "PRIORITY",
+    "feat1_desc": "Organize your tasks and subtasks by priority and category with ease. Our system gives you full control over your workflow with smart filters focused on deadlines.",
+    "feat1_bullet1": "Smart Deadline Sorting",
+    "feat1_bullet2": "Deep Subtask Hierarchies",
+    "feat1_bullet3": "List View",
+    "feat2_title": "Data Analysis",
+    "feat2_desc": "Track all your progress and access a complete dashboard for data analysis. Need a formal report? We offer full PDF export.",
+    "feat2_link": "Explore Dashboard →",
+    "chart_label": "TOTAL PRODUCTIVITY",
+    "footer_slogan": "The luminous companion for your daily productivity journey.",
+    "footer_nav": "NAVIGATION",
+    "footer_inst": "COMPANY",
+    "footer_suporte": "Support/Contact",
+    "footer_termos": "Terms of Use",
+    "footer_privacidade": "Privacy",
+    "footer_copy": "All rights reserved to Marcos Emanuel and Melkysedeke Costa",
+    "btn_contato_suporte": "CONTACT SUPPORT"
+  }
+}
