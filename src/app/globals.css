@@ -1,0 +1,58 @@
+@import "tailwindcss";
+
+/* O @theme registra as cores no compilador de classes utilitárias da v4 */
+@theme {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-border: var(--border);
+  --color-muted: var(--muted);
+  --color-error: var(--error);
+
+  --color-primary: #D6A628;
+  --color-primary-hover: #B98C03;
+  --color-secondary: #B85B33;
+  --color-secondary-hover: #9B451F;
+  --color-tertiary: #8C7364;
+  --color-tertiary-hover: #4E4635;
+}
+
+/* Modo Claro */
+:root {
+  --background: #F9F7F5;
+  --foreground: #121212;
+  --card: #FFFFFF;
+  --border: #E5E7EB;
+  --muted: #5E5E5E;
+  --error: #EF4444;
+}
+
+/* Modo Escuro */
+.dark {
+  --background: #1e1e1e;
+  --foreground: #F9F7F5;
+  --card: #1A1A1A;
+  --border: #27272A;
+  --muted: #A1A1AA;
+  --error: #F87171;
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+  }
+}
+
+@keyframes blob-fade {
+  0% { opacity: 0; transform: scale(0.8); }
+  100% { opacity: 0.6; transform: scale(1); }
+}
+
+.animate-blob-fade {
+  animation: blob-fade 1.5s ease-out forwards;
+}

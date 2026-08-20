@@ -1,0 +1,64 @@
+"use client";
+
+import { ThemeProvider as NextThemesProvider, type ThemeProviderProps as NextThemesProviderProps } from "next-themes";
+import { createContext, useContext, useEffect, useState, useMemo } from "react";
+
+interface ThemeProviderProps extends Omit<NextThemesProviderProps, "children"> {
+  readonly children: React.ReactNode;
+}
+
+interface ColorContextType {
+  primaryColor: string;
+  changePrimaryColor: (color: string) => void;
+}
+
+const ColorContext = createContext<ColorContextType | undefined>(undefined);
+
+export function ThemeProvider({ children, ...props }: Readonly<ThemeProviderProps>) {
+  const [primaryColor, setPrimaryColor] = useState("#d4af37");
+
+  useEffect(() => {
+    const savedColor = localStorage.getItem("priowl-primary-color");
+    if (savedColor) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setPrimaryColor(savedColor);
+      document.documentElement.style.setProperty("--color-primary", savedColor);
+    }
+  }, []);
+
+  const changePrimaryColor = (color: string) => {
+    setPrimaryColor(color);
+    localStorage.setItem("priowl-primary-color", color);
+    document.documentElement.style.setProperty("--color-primary", color);
+  };
+
+  const colorContextValue = useMemo(
+    () => ({
+      primaryColor,
+      changePrimaryColor,
+    }),
+    [primaryColor]
+  );
+
+  return (
+    <ColorContext.Provider value={colorContextValue}>
+      <NextThemesProvider 
+        attribute="class" 
+        defaultTheme="system" 
+        enableSystem 
+        disableTransitionOnChange
+        {...props}
+      >
+        {children}
+      </NextThemesProvider>
+    </ColorContext.Provider>
+  );
+}
+
+export function usePrimaryColor() {
+  const context = useContext(ColorContext);
+  if (!context) {
+    throw new Error("usePrimaryColor deve ser usado dentro de um ThemeProvider");
+  }
+  return context;
+}
