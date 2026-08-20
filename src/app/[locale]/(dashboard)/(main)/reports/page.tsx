@@ -99,7 +99,6 @@ export default async function RelatoriosPage() {
 
       {/* MAPA DE DEPENDÊNCIAS */}
       <DependencyMap chains={dependencyChains} />
-
     </div>
   );
 }
